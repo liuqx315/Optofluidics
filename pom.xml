@@ -31,6 +31,10 @@
 		<artifactId>opencsv</artifactId>
 		<version>2.0</version>
 	</dependency>
+	<dependency>
+		<groupId>org.jfree</groupId>
+		<artifactId>jfreechart</artifactId>
+	</dependency>
 	</dependencies>
 
 	<build>
@@ -90,4 +94,12 @@
 
 	<artifactId>Optofluidics</artifactId>
 	<description>The Fiji plugins for the Optofluidic devices.</description>
+	
+	<repositories>
+		<!-- NB: for project parent -->
+		<repository>
+			<id>imagej.public</id>
+			<url>http://maven.imagej.net/content/groups/public</url>
+		</repository>
+	</repositories>
 </project>

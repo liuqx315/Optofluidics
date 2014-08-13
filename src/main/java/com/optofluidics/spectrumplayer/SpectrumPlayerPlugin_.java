@@ -11,17 +11,31 @@ import ij.WindowManager;
 import ij.measure.Calibration;
 import ij.plugin.PlugIn;
 
+import java.awt.Color;
+import java.awt.Dimension;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
+import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
+
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartPanel;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
+import org.jfree.data.xy.DefaultXYDataset;
+import org.jfree.data.xy.XYDataset;
 
 import au.com.bytecode.opencsv.CSVReader;
 
@@ -38,11 +52,19 @@ public class SpectrumPlayerPlugin_ implements PlugIn
 	 */
 	private static final int METADATA_LINES = 8;
 
+	private static final String XLABEL = "lambda (nm)";
+
+	private static final String YLABEL = "#";
+
 	private static File previousPath = null;
 
 	private ArrayList< double[] > spectra;
 
 	private ArrayList< Double > spectraTimeStamps;
+
+	private double[] X;
+
+	private DefaultXYDataset dataset;
 
 	@Override
 	public void run( final String command )
@@ -197,9 +219,73 @@ public class SpectrumPlayerPlugin_ implements PlugIn
 				{
 					System.out.println( "Moved to frame " + frame + " associated with spectrum " + targetSpectrum );
 				}
+				displaySpectrum(targetSpectrum);
 			}
 		};
 		new SliceObserver( imp, listener );
+	}
+
+	private void displaySpectrum( int targetSpectrum )
+	{
+
+		if ( targetSpectrum < 0 )
+		{
+			return;
+		}
+		else
+		{
+			double[] spectrum = spectra.get( targetSpectrum );
+			if ( null == dataset )
+			{
+				dataset = new DefaultXYDataset();
+				dataset.addSeries( "Spectrum", new double[][] { X, spectrum } );
+
+				JFreeChart chart = createChart( dataset );
+				final ChartPanel chartPanel = new ChartPanel( chart );
+				chartPanel.setPreferredSize( new Dimension( 500, 270 ) );
+
+				JFrame frame = new JFrame( PLUGIN_TITLE );
+				frame.setContentPane( chartPanel );
+				frame.pack();
+				frame.setVisible( true );
+			}
+			else
+			{
+				dataset.addSeries( "Spectrum", new double[][] { X, spectrum } );
+			}
+		}
+	}
+
+	private JFreeChart createChart( final XYDataset dataset )
+	{
+
+		// create the chart...
+		final JFreeChart chart = ChartFactory.createXYLineChart(
+				PLUGIN_TITLE, // chart title
+				XLABEL, // x axis label
+				YLABEL, // y axis label
+				dataset, // data
+				PlotOrientation.VERTICAL,
+				false, // include legend
+				false, // tooltips
+				false // urls
+		);
+
+		chart.setBackgroundPaint( Color.white );
+
+		// get a reference to the plot for further customisation...
+		final XYPlot plot = chart.getXYPlot();
+		plot.setBackgroundPaint( Color.lightGray );
+		plot.setDomainGridlinePaint( Color.white );
+		plot.setRangeGridlinePaint( Color.white );
+
+		final XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer();
+		renderer.setSeriesLinesVisible( 0, true );
+		renderer.setSeriesShapesVisible( 0, false );
+		plot.setRenderer( renderer );
+
+		return chart;
+
 	}
 
 	private void loadSpectrum( final File spectrumFile )
@@ -245,7 +331,8 @@ public class SpectrumPlayerPlugin_ implements PlugIn
 				reader.close();
 				return;
 			}
-			final double[] X = new double[ nextLine.length ];
+			// Reverse order // TOCO check?
+			X = new double[ nextLine.length ];
 			for ( int i = 0; i < X.length; i++ )
 			{
 				X[ i ] = Double.parseDouble( nextLine[ i ] );
@@ -262,14 +349,12 @@ public class SpectrumPlayerPlugin_ implements PlugIn
 			while ( ( nextLine = reader.readNext() ) != null )
 			{
 				line++;
-				final double[] spectrum = new double[ nextLine.length ];
+				final double[] spectrum = new double[ X.length ];
 
 				// Timestamps are supposed to be stored at 1st column;
 				// Right now, I am making up this.
-				spectraTimeStamps.add( Double.valueOf( ( line - 8 ) * 4 ) ); // nextLine[
-																				// 0
-				// ] ) );
-				// FIXME
+				spectraTimeStamps.add( Double.valueOf( ( line - 8 ) * 4 ) );
+				// nextLine[ 0 ] ) );// FIXME
 
 				for ( int i = 0; i < X.length; i++ )
 				{
@@ -286,6 +371,7 @@ public class SpectrumPlayerPlugin_ implements PlugIn
 						return;
 					}
 				}
+				Collections.reverse( Arrays.asList( spectrum ) );
 				spectra.add( spectrum );
 			}
 
@@ -325,6 +411,7 @@ public class SpectrumPlayerPlugin_ implements PlugIn
 	{
 		ImageJ.main( args );
 		IJ.open( "http://imagej.nih.gov/ij/images/bat-cochlea-volume.zip" );
-		new SpectrumPlayerPlugin_().run( "image=bat-cochlea-volume.tif spectrum=E:\\Users\\JeanYves\\Documents\\Projects\\Optofluidics\\24-12.csv" );
+		new SpectrumPlayerPlugin_().run( "image=bat-cochlea-volume.tif spectrum=../24-12.csv" );
 	}
+
 }
