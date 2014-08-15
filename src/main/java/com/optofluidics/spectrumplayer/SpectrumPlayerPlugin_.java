@@ -37,8 +37,6 @@ import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.xy.DefaultXYDataset;
 import org.jfree.data.xy.XYDataset;
 
-import au.com.bytecode.opencsv.CSVReader;
-
 public class SpectrumPlayerPlugin_ implements PlugIn
 {
 	private static final String PLUGIN_TITLE = "Optofluidics spectrum player.";
