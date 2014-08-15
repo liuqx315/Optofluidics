@@ -409,7 +409,8 @@ public class SpectrumPlayerPlugin_ implements PlugIn
 	{
 		ImageJ.main( args );
 		IJ.open( "http://imagej.nih.gov/ij/images/bat-cochlea-volume.zip" );
-		new SpectrumPlayerPlugin_().run( "image=bat-cochlea-volume.tif spectrum=../24-12.csv" );
+//		new SpectrumPlayerPlugin_().run( "image=bat-cochlea-volume.tif spectrum=../24-12.csv" );
+		new SpectrumPlayerPlugin_().run( "" );
 	}
 
 }

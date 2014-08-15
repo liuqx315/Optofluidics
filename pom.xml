@@ -16,6 +16,11 @@
 	<version>0.0.1-SNAPSHOT</version>
 
 	<name>plugins/Optofuidics_.jar</name>
+	
+	<properties>
+		<!-- Prevent the plugin from being copied to ./plugins/ by default -->
+		<imagej.app.directory>../Fiji.app/</imagej.app.directory>
+	</properties>
 
 	<dependencies>
 		<dependency>
