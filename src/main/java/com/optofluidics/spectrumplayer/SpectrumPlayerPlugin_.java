@@ -20,8 +20,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -380,7 +378,6 @@ public class SpectrumPlayerPlugin_ implements PlugIn
 						return;
 					}
 				}
-				Collections.reverse( Arrays.asList( spectrum ) );
 				spectra.add( spectrum );
 			}
 
