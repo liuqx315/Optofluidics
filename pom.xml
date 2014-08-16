@@ -92,7 +92,7 @@
 		<url>https://github.com/tinevez/Optofluidics</url>
 	</scm>
 
-	<artifactId>Optofluidics</artifactId>
+	<artifactId>Optofluidics_</artifactId>
 	<description>The Fiji plugins for the Optofluidic devices.</description>
 	
 	<repositories>
