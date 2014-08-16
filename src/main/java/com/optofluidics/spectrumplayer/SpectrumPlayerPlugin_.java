@@ -13,6 +13,7 @@ import ij.plugin.PlugIn;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.event.WindowAdapter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -63,6 +64,8 @@ public class SpectrumPlayerPlugin_ implements PlugIn
 	private double[] X;
 
 	private DefaultXYDataset dataset;
+
+	private SliceObserver sliceObserver;
 
 	@Override
 	public void run( final String command )
@@ -209,18 +212,10 @@ public class SpectrumPlayerPlugin_ implements PlugIn
 			{
 				final int frame = image.getT() - 1;
 				final int targetSpectrum = targetSpectra[ frame ];
-				if ( targetSpectrum < 0 )
-				{
-					System.out.println( "Moved to frame " + frame + " not associated with a spectrum. " );
-				}
-				else
-				{
-					System.out.println( "Moved to frame " + frame + " associated with spectrum " + targetSpectrum );
-				}
 				displaySpectrum(targetSpectrum);
 			}
 		};
-		new SliceObserver( imp, listener );
+		sliceObserver = new SliceObserver( imp, listener );
 	}
 
 	private void displaySpectrum( int targetSpectrum )
@@ -243,6 +238,15 @@ public class SpectrumPlayerPlugin_ implements PlugIn
 				chartPanel.setPreferredSize( new Dimension( 500, 270 ) );
 
 				JFrame frame = new JFrame( PLUGIN_TITLE );
+				frame.addWindowListener( new WindowAdapter()
+				{
+					@Override
+					public void windowClosing( java.awt.event.WindowEvent e )
+					{
+						dataset = null;
+						sliceObserver.unregister();
+					};
+				} );
 				frame.setContentPane( chartPanel );
 				frame.pack();
 				frame.setVisible( true );
@@ -409,8 +413,8 @@ public class SpectrumPlayerPlugin_ implements PlugIn
 	{
 		ImageJ.main( args );
 		IJ.open( "http://imagej.nih.gov/ij/images/bat-cochlea-volume.zip" );
-//		new SpectrumPlayerPlugin_().run( "image=bat-cochlea-volume.tif spectrum=../24-12.csv" );
-		new SpectrumPlayerPlugin_().run( "" );
+		new SpectrumPlayerPlugin_().run( "image=bat-cochlea-volume.tif spectrum=../24-12.csv" );
+//		new SpectrumPlayerPlugin_().run( "" );
 	}
 
 }
