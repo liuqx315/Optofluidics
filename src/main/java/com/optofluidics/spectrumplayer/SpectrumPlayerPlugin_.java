@@ -351,6 +351,13 @@ public class SpectrumPlayerPlugin_ implements PlugIn
 			while ( ( nextLine = reader.readNext() ) != null )
 			{
 				line++;
+
+				if ( nextLine.length < X.length )
+				{
+					IJ.log( "Warning: Spectrum on line " + line + " does not have enough data points. Expected at least " + X.length + " but found " + nextLine.length + ". Skipping." );
+					continue;
+				}
+
 				final double[] spectrum = new double[ X.length ];
 
 				// Timestamps are supposed to be stored at 1st column;
