@@ -1,5 +1,6 @@
 package com.optofluidics.trackmate.action;
 
+import java.awt.Frame;
 import java.io.File;
 
 import javax.swing.ImageIcon;
@@ -33,6 +34,8 @@ public class VelocityAnalysisAction extends AbstractTMAction
 
 	private static final int DEFAULT_MIN_CONS_FRAMES = 2;
 
+	private static final int DEFAULT_SMOOTHING_WINDOW = 20;
+
 	private final TrackMateGUIController controller;
 
 	public VelocityAnalysisAction( final TrackMateGUIController controller )
@@ -48,10 +51,38 @@ public class VelocityAnalysisAction extends AbstractTMAction
 		final Model model = trackmate.getModel();
 		final String velocityUnits = TMUtils.getUnitsFor( Dimension.VELOCITY, model.getSpaceUnits(), model.getTimeUnits() );
 
-		final double velocityThreshold = DEFAULT_VELOCITY_THRESHOLD;
-		final int minConsecutiveFrames = DEFAULT_MIN_CONS_FRAMES;
+		/*
+		 * Show dialog
+		 */
 
-		logger.log( "Tresholding tracks by instantaneous velocity above " + velocityThreshold + " " + velocityUnits + " for at least " + minConsecutiveFrames + " frames.\n" );
+		Frame frame;
+		if ( null == controller )
+		{
+			frame = null;
+		}
+		else
+		{
+			frame = controller.getGUI();
+		}
+
+		final VelocityThresholdDialog dialog = new VelocityThresholdDialog( frame, DEFAULT_VELOCITY_THRESHOLD, DEFAULT_MIN_CONS_FRAMES, DEFAULT_SMOOTHING_WINDOW, velocityUnits );
+		dialog.setVisible( true );
+
+		if ( dialog.wasCanceled() )
+		{
+			logger.log( "Canceled.\n" );
+			return;
+		}
+
+		final double velocityThreshold = dialog.getVelocityThreshold();
+		final int minConsecutiveFrames = dialog.getMinFrames();
+		final int smoothingWindow = dialog.getSmoothWindow();
+
+		/*
+		 * Threshold
+		 */
+
+		logger.log( "Tresholding tracks by instantaneous velocity above " + velocityThreshold + " " + velocityUnits + " for at least " + minConsecutiveFrames + " frames, with a sommthing window of " + smoothingWindow + " frames.\n" );
 
 		final TrackVelocityThresholder thresholder = new TrackVelocityThresholder( model, velocityThreshold, minConsecutiveFrames );
 		thresholder.setLogger( logger );
