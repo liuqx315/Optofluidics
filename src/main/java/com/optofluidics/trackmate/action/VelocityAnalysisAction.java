@@ -34,7 +34,7 @@ public class VelocityAnalysisAction extends AbstractTMAction
 
 	private static final int DEFAULT_MIN_CONS_FRAMES = 2;
 
-	private static final int DEFAULT_SMOOTHING_WINDOW = 20;
+	private static final int DEFAULT_SMOOTHING_WINDOW = 5;
 
 	private final TrackMateGUIController controller;
 
@@ -82,9 +82,9 @@ public class VelocityAnalysisAction extends AbstractTMAction
 		 * Threshold
 		 */
 
-		logger.log( "Tresholding tracks by instantaneous velocity above " + velocityThreshold + " " + velocityUnits + " for at least " + minConsecutiveFrames + " frames, with a sommthing window of " + smoothingWindow + " frames.\n" );
+		logger.log( "Tresholding tracks by instantaneous velocity above " + velocityThreshold + " " + velocityUnits + " for at least " + minConsecutiveFrames + " frames, with a smoothing window of " + smoothingWindow + " frames.\n" );
 
-		final TrackVelocityThresholder thresholder = new TrackVelocityThresholder( model, velocityThreshold, minConsecutiveFrames );
+		final TrackVelocityThresholder thresholder = new TrackVelocityThresholder( model, velocityThreshold, minConsecutiveFrames, smoothingWindow );
 		thresholder.setLogger( logger );
 		if ( !thresholder.checkInput() || !thresholder.process() )
 		{
