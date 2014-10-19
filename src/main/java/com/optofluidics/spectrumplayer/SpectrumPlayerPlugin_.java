@@ -19,7 +19,9 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Map;
 import java.util.Set;
 
@@ -57,7 +59,7 @@ public class SpectrumPlayerPlugin_ implements PlugIn
 
 	private ArrayList< double[] > spectra;
 
-	private ArrayList< Double > spectraTimeStamps;
+	private ArrayList< Date > spectraTimeStamps;
 
 	private double[] X;
 
@@ -152,10 +154,7 @@ public class SpectrumPlayerPlugin_ implements PlugIn
 		 * Process inputs
 		 */
 
-		if ( dialog.wasCanceled() )
-		{
-			return;
-		}
+		if ( dialog.wasCanceled() ) { return; }
 
 		final String imageName = dialog.getNextImage().getTitle();
 		final String spectrumPath = dialog.getNextString();
@@ -186,6 +185,14 @@ public class SpectrumPlayerPlugin_ implements PlugIn
 		// Load spectrum in memory.
 		loadSpectrum( spectrumFile );
 
+		// Make time relative
+		final long[] time = new long[ spectraTimeStamps.size() ];
+		final long t0 = spectraTimeStamps.get( 0 ).getTime();
+		for ( int i = 0; i < time.length; i++ )
+		{
+			time[ i ] = spectraTimeStamps.get( i ).getTime() - t0;
+		}
+
 		// Prepare time stamp "map".
 		final int nFrames = imp.getNFrames();
 		final int[] targetSpectra = new int[ nFrames ];
@@ -196,6 +203,10 @@ public class SpectrumPlayerPlugin_ implements PlugIn
 			 * IMPORTANT! We suppose that the spectrum timestamps are sorted in
 			 * INCREASING order.
 			 */
+
+			// IMPORTANT! The time of a frame is calculated from its time
+			// interval.
+
 			while ( currentSpectrum < spectraTimeStamps.size() && spectraTimeStamps.get( currentSpectrum ) <= frame )
 			{
 				currentSpectrum++;
@@ -210,13 +221,13 @@ public class SpectrumPlayerPlugin_ implements PlugIn
 			{
 				final int frame = image.getT() - 1;
 				final int targetSpectrum = targetSpectra[ frame ];
-				displaySpectrum(targetSpectrum);
+				displaySpectrum( targetSpectrum );
 			}
 		};
 		sliceObserver = new SliceObserver( imp, listener );
 	}
 
-	private void displaySpectrum( int targetSpectrum )
+	private void displaySpectrum( final int targetSpectrum )
 	{
 
 		if ( targetSpectrum < 0 )
@@ -225,21 +236,21 @@ public class SpectrumPlayerPlugin_ implements PlugIn
 		}
 		else
 		{
-			double[] spectrum = spectra.get( targetSpectrum );
+			final double[] spectrum = spectra.get( targetSpectrum );
 			if ( null == dataset )
 			{
 				dataset = new DefaultXYDataset();
 				dataset.addSeries( "Spectrum", new double[][] { X, spectrum } );
 
-				JFreeChart chart = createChart( dataset );
+				final JFreeChart chart = createChart( dataset );
 				final ChartPanel chartPanel = new ChartPanel( chart );
 				chartPanel.setPreferredSize( new Dimension( 500, 270 ) );
 
-				JFrame frame = new JFrame( PLUGIN_TITLE );
+				final JFrame frame = new JFrame( PLUGIN_TITLE );
 				frame.addWindowListener( new WindowAdapter()
 				{
 					@Override
-					public void windowClosing( java.awt.event.WindowEvent e )
+					public void windowClosing( final java.awt.event.WindowEvent e )
 					{
 						dataset = null;
 						sliceObserver.unregister();
@@ -260,16 +271,15 @@ public class SpectrumPlayerPlugin_ implements PlugIn
 	{
 
 		// create the chart...
-		final JFreeChart chart = ChartFactory.createXYLineChart(
-				PLUGIN_TITLE, // chart title
+		final JFreeChart chart = ChartFactory.createXYLineChart( PLUGIN_TITLE, // chart
+				// title
 				XLABEL, // x axis label
 				YLABEL, // y axis label
 				dataset, // data
-				PlotOrientation.VERTICAL,
-				false, // include legend
+				PlotOrientation.VERTICAL, false, // include legend
 				false, // tooltips
 				false // urls
-		);
+				);
 
 		chart.setBackgroundPaint( Color.white );
 
@@ -302,6 +312,9 @@ public class SpectrumPlayerPlugin_ implements PlugIn
 			return;
 		}
 
+		// Pattern for time stamps
+		final SimpleDateFormat tsFormat = new SimpleDateFormat( "'Timestamp: 'yyyy-MM-dd HH:mm:ss.SSS" );
+
 		try
 		{
 			String[] nextLine;
@@ -331,21 +344,16 @@ public class SpectrumPlayerPlugin_ implements PlugIn
 				reader.close();
 				return;
 			}
-			// Reverse order // TOCO check?
+			// Reverse order
 			X = new double[ nextLine.length ];
 			for ( int i = 0; i < X.length; i++ )
 			{
 				X[ i ] = Double.parseDouble( nextLine[ i ] );
-				// TODO check if this change when we have real timestamps.
 			}
 
-			// Blank line
-			nextLine = reader.readNext();
-			line++;
-
-			// Spectra.
+			// Spectra * timestamps.
 			spectra = new ArrayList< double[] >();
-			spectraTimeStamps = new ArrayList< Double >();
+			spectraTimeStamps = new ArrayList< Date >();
 			while ( ( nextLine = reader.readNext() ) != null )
 			{
 				line++;
@@ -357,19 +365,11 @@ public class SpectrumPlayerPlugin_ implements PlugIn
 				}
 
 				final double[] spectrum = new double[ X.length ];
-
-				// Timestamps are supposed to be stored at 1st column;
-				// Right now, I am making up this.
-				spectraTimeStamps.add( Double.valueOf( ( line - 8 ) * 4 ) );
-				// nextLine[ 0 ] ) );// FIXME
-
 				for ( int i = 0; i < X.length; i++ )
 				{
 					try
 					{
 						spectrum[ i ] = Double.parseDouble( nextLine[ i ] );
-						// TODO check if this change when we have real
-						// timestamps.
 					}
 					catch ( final NumberFormatException nfe )
 					{
@@ -379,6 +379,36 @@ public class SpectrumPlayerPlugin_ implements PlugIn
 					}
 				}
 				spectra.add( spectrum );
+
+				/*
+				 * Time-stamps
+				 */
+
+				// Read one more line
+				nextLine = reader.readNext();
+				if ( nextLine == null )
+				{
+					IJ.log( "Warning: Spectrum on line " + line + " is missing its time-stamp." );
+					spectraTimeStamps.add( spectraTimeStamps.get( spectraTimeStamps.size() - 1 ) );
+					// Add last one instead.
+					break;
+				}
+				line++;
+
+				final String ts = nextLine[ 0 ];
+				try
+				{
+					final Date date = tsFormat.parse( ts );
+					spectraTimeStamps.add( date );
+				}
+				catch ( final ParseException e )
+				{
+					IJ.log( "Warning: Time-stamp on line " + line + " cound not be interpreted." );
+					spectraTimeStamps.add( spectraTimeStamps.get( spectraTimeStamps.size() - 1 ) );
+					// Add last one instead.
+					continue;
+				}
+
 			}
 
 			// Log.
@@ -417,8 +447,10 @@ public class SpectrumPlayerPlugin_ implements PlugIn
 	{
 		ImageJ.main( args );
 		IJ.open( "http://imagej.nih.gov/ij/images/bat-cochlea-volume.zip" );
-		new SpectrumPlayerPlugin_().run( "image=bat-cochlea-volume.tif spectrum=../24-12.csv" );
-//		new SpectrumPlayerPlugin_().run( "" );
+		// new SpectrumPlayerPlugin_().run(
+		// "image=bat-cochlea-volume.tif spectrum=../24-12.csv" );
+		new SpectrumPlayerPlugin_().run( "image=bat-cochlea-volume.tif spectrum=../t6_76-5.csv" );
+		// new SpectrumPlayerPlugin_().run( "" );
 	}
 
 }
