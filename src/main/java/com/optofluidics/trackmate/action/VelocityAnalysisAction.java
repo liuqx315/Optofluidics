@@ -1,5 +1,7 @@
 package com.optofluidics.trackmate.action;
 
+import ij.ImageJ;
+
 import java.awt.Frame;
 import java.io.File;
 
@@ -7,13 +9,17 @@ import javax.swing.ImageIcon;
 
 import org.scijava.plugin.Plugin;
 
+import com.optofluidics.trackmate.features.track.TrackLinearVelocityAnalyzer;
+
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.LoadTrackMatePlugIn_;
 import fiji.plugin.trackmate.Model;
+import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.action.AbstractTMAction;
 import fiji.plugin.trackmate.action.TrackMateAction;
 import fiji.plugin.trackmate.action.TrackMateActionFactory;
+import fiji.plugin.trackmate.features.TrackFeatureCalculator;
 import fiji.plugin.trackmate.gui.TrackMateGUIController;
 import fiji.plugin.trackmate.util.TMUtils;
 
@@ -35,6 +41,12 @@ public class VelocityAnalysisAction extends AbstractTMAction
 	private static final int DEFAULT_SMOOTHING_WINDOW = 5;
 
 	private final TrackMateGUIController controller;
+
+	private static int smoothingWindow = DEFAULT_SMOOTHING_WINDOW;
+
+	private static int minConsecutiveFrames = DEFAULT_MIN_CONS_FRAMES;
+
+	private static double velocityThreshold = DEFAULT_VELOCITY_THRESHOLD;
 
 	public VelocityAnalysisAction( final TrackMateGUIController controller )
 	{
@@ -63,7 +75,7 @@ public class VelocityAnalysisAction extends AbstractTMAction
 			frame = controller.getGUI();
 		}
 
-		final VelocityThresholdDialog dialog = new VelocityThresholdDialog( frame, DEFAULT_VELOCITY_THRESHOLD, DEFAULT_MIN_CONS_FRAMES, DEFAULT_SMOOTHING_WINDOW, velocityUnits );
+		final VelocityThresholdDialog dialog = new VelocityThresholdDialog( frame, velocityThreshold, minConsecutiveFrames, smoothingWindow, velocityUnits );
 		dialog.setVisible( true );
 
 		if ( dialog.wasCanceled() )
@@ -72,9 +84,9 @@ public class VelocityAnalysisAction extends AbstractTMAction
 			return;
 		}
 
-		final double velocityThreshold = dialog.getVelocityThreshold();
-		final int minConsecutiveFrames = dialog.getMinFrames();
-		final int smoothingWindow = dialog.getSmoothWindow();
+		velocityThreshold = dialog.getVelocityThreshold();
+		minConsecutiveFrames = dialog.getMinFrames();
+		smoothingWindow = dialog.getSmoothWindow();
 
 		/*
 		 * Threshold
@@ -91,6 +103,15 @@ public class VelocityAnalysisAction extends AbstractTMAction
 		}
 
 		logger.log( "Velocity thresholding & supplemental feature calculation done.\n" );
+
+		/*
+		 * Export
+		 */
+
+		final VelocityAnalysisExporter exporter = new VelocityAnalysisExporter( model );
+		exporter.exportToImageJTable();
+
+		logger.log( "Created results table.\n" );
 
 		logger.log( "Done.\n" );
 
@@ -158,7 +179,23 @@ public class VelocityAnalysisAction extends AbstractTMAction
 		//
 		// action.execute( trackmate );
 
-		final LoadTrackMatePlugIn_ plugin = new LoadTrackMatePlugIn_();
+		ImageJ.main( args );
+
+		final LoadTrackMatePlugIn_ plugin = new LoadTrackMatePlugIn_()
+		{
+			/*
+			 * Ensure in this snippet that custom track analyzer are triggered.
+			 */
+
+			@Override
+			protected void postRead( final TrackMate trackmate )
+			{
+				final Settings settings = trackmate.getSettings();
+				settings.addTrackAnalyzer( new TrackLinearVelocityAnalyzer() );
+				new TrackFeatureCalculator( trackmate.getModel(), settings ).process();
+			}
+
+		};
 		plugin.run( file.getAbsolutePath() );
 
 	}
