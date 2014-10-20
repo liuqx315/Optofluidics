@@ -1,6 +1,7 @@
 package com.optofluidics.trackmate.action;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -23,6 +24,7 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 
 import com.optofluidics.util.MovingAverage;
 
+import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.FeatureModel;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Model;
@@ -43,10 +45,6 @@ public class TrackVelocityThresholder implements Algorithm
 	private final int minConsecutiveFrames;
 
 	private final int smoothingWindow;
-
-	private Map< Integer, List< List< DefaultWeightedEdge > > > trackRuns;
-
-	private Map< Integer, List< List< DefaultWeightedEdge > > > trackGaps;
 
 	private String errorMessage;
 
@@ -91,24 +89,22 @@ public class TrackVelocityThresholder implements Algorithm
 		return errorMessage;
 	}
 
-	public Map< Integer, List< List< DefaultWeightedEdge >>> getTrackGaps()
-	{
-		return trackGaps;
-	}
-
-	public Map< Integer, List< List< DefaultWeightedEdge >>> getTrackRuns()
-	{
-		return trackRuns;
-	}
-
 	@Override
 	public boolean process()
 	{
-		trackRuns = new HashMap< Integer, List< List< DefaultWeightedEdge > > >();
-		trackGaps = new HashMap< Integer, List< List< DefaultWeightedEdge > > >();
-
 		final TrackModel trackModel = model.getTrackModel();
 		final FeatureModel fm = model.getFeatureModel();
+
+		/*
+		 * Declare features
+		 * 
+		 * Now, this is going to be a bit weird: This action is going to
+		 * generate new track features. They were not declared before the first
+		 * time this action is run, and they are not in sync against
+		 * modification of the model. Let's see how it rolls in the GUI.
+		 */
+
+		fm.declareTrackFeatures( FEATURES, FEATURE_NAMES, FEATURE_SHOTRT_NAMES, FEATURE_DIMENSIONS, IS_INT );
 
 		final Set< Integer > trackIDs = trackModel.unsortedTrackIDs( true );
 		// final Integer id = trackIDs.iterator().next();
@@ -186,17 +182,62 @@ public class TrackVelocityThresholder implements Algorithm
 					run.add( edge );
 				}
 			}
-			if ( !gaps.contains( gap ) )
+			if ( null != gap && !gaps.contains( gap ) )
 			{
 				gaps.add( gap );
 			}
-			if ( !runs.contains( run ) )
+			if ( null != run && !runs.contains( run ) )
 			{
 				runs.add( run );
 			}
 
-			trackRuns.put( id, runs );
-			trackGaps.put( id, runs );
+			/*
+			 * Assign feature values.
+			 */
+
+			// Number of pauses.
+			final int nPauses = gaps.size();
+			fm.putTrackFeature( id, NUMBER_OF_PAUSES, Double.valueOf( nPauses ) );
+
+			// Mean duration of pauses.
+			double totalPauseDuration = 0d;
+			for ( final List< DefaultWeightedEdge > gap2 : gaps )
+			{
+				if ( gap2.size() < 1 )
+				{
+					continue;
+				}
+				final DefaultWeightedEdge firstEdge = gap2.get( 0 );
+				final DefaultWeightedEdge lastEdge = gap2.get( gap2.size() - 1 );
+				final double tf = fm.getEdgeFeature( firstEdge, EdgeTimeLocationAnalyzer.TIME );
+				final double tl = fm.getEdgeFeature( lastEdge, EdgeTimeLocationAnalyzer.TIME );
+				totalPauseDuration += ( tl - tf );
+			}
+			final double meanPauseDuration = totalPauseDuration / nPauses;
+			fm.putTrackFeature( id, PAUSE_MEAN_DURATION, Double.valueOf( meanPauseDuration ) );
+
+			// Mean velocity without pauses.
+			double totalVelocity = 0d;
+			int nVelocity = 0;
+			for ( final List< DefaultWeightedEdge > run2 : runs )
+			{
+				if ( run2.size() < 1 )
+				{
+					continue;
+				}
+				for ( final DefaultWeightedEdge edge : run2 )
+				{
+					final double v = fm.getEdgeFeature( edge, EdgeVelocityAnalyzer.VELOCITY );
+					totalVelocity += v;
+					nVelocity++;
+				}
+			}
+			final double meanVelocity = totalVelocity / nVelocity;
+			fm.putTrackFeature( id, MEAN_VELOCITY_NO_PAUSES, Double.valueOf( meanVelocity ) );
+
+			/*
+			 * Log
+			 */
 
 			logger.log( "Track " + trackModel.name( id ) + " has " + gaps.size() + " pauses and " + runs.size() + " runs.\n" );
 		}
@@ -305,6 +346,54 @@ public class TrackVelocityThresholder implements Algorithm
 			return 0;
 		}
 
+	}
+
+	/*
+	 * FEATURE DECLARATION
+	 */
+
+	private static final String NUMBER_OF_PAUSES = "NUMBER_OF_PAUSES";
+
+	private static final String PAUSE_MEAN_DURATION = "PAUSE_MEAN_DURATION";
+
+	private static final String MEAN_VELOCITY_NO_PAUSES = "MEAN_VELOCITY_NO_PAUSES";
+
+	private static final Collection< String > FEATURES;
+
+	private static final Map< String, String > FEATURE_NAMES;
+
+	private static final Map< String, String > FEATURE_SHOTRT_NAMES;
+
+	private static final Map< String, Dimension > FEATURE_DIMENSIONS;
+
+	private static final Map< String, Boolean > IS_INT;
+
+	static
+	{
+		FEATURES = new ArrayList< String >( 3 );
+		FEATURES.add( NUMBER_OF_PAUSES );
+		FEATURES.add( PAUSE_MEAN_DURATION );
+		FEATURES.add( MEAN_VELOCITY_NO_PAUSES );
+
+		FEATURE_NAMES = new HashMap< String, String >( 3 );
+		FEATURE_NAMES.put( NUMBER_OF_PAUSES, "Number of pauses" );
+		FEATURE_NAMES.put( PAUSE_MEAN_DURATION, "Mean pause duration" );
+		FEATURE_NAMES.put( MEAN_VELOCITY_NO_PAUSES, "Mean velocity w/o pauses" );
+
+		FEATURE_SHOTRT_NAMES = new HashMap< String, String >( 3 );
+		FEATURE_SHOTRT_NAMES.put( NUMBER_OF_PAUSES, "N pauses" );
+		FEATURE_SHOTRT_NAMES.put( PAUSE_MEAN_DURATION, "Pause duration" );
+		FEATURE_SHOTRT_NAMES.put( MEAN_VELOCITY_NO_PAUSES, "Mean V. w/o pauses" );
+
+		FEATURE_DIMENSIONS = new HashMap< String, Dimension >( 3 );
+		FEATURE_DIMENSIONS.put( NUMBER_OF_PAUSES, Dimension.NONE );
+		FEATURE_DIMENSIONS.put( PAUSE_MEAN_DURATION, Dimension.TIME );
+		FEATURE_DIMENSIONS.put( MEAN_VELOCITY_NO_PAUSES, Dimension.VELOCITY );
+
+		IS_INT = new HashMap< String, Boolean >( 3 );
+		IS_INT.put( NUMBER_OF_PAUSES, Boolean.TRUE );
+		IS_INT.put( PAUSE_MEAN_DURATION, Boolean.FALSE );
+		IS_INT.put( MEAN_VELOCITY_NO_PAUSES, Boolean.FALSE );
 	}
 
 }
