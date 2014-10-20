@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.optofluidics.trackmate.features.track.TrackLinearVelocityAnalyzer;
+import com.optofluidics.trackmate.features.track.TrackSpotIntensityAnalyzer;
 
 import fiji.plugin.trackmate.FeatureModel;
 import fiji.plugin.trackmate.Model;
@@ -33,17 +34,22 @@ public class VelocityAnalysisExporter
 		final List< String > list = new ArrayList< String >();
 
 		list.add( TrackBranchingAnalyzer.NUMBER_SPOTS );
+
 		list.add( TrackDurationAnalyzer.TRACK_DISPLACEMENT );
 		list.add( TrackDurationAnalyzer.TRACK_DURATION );
 		list.add( TrackDurationAnalyzer.TRACK_START );
 		list.add( TrackDurationAnalyzer.TRACK_STOP );
+
 		list.add( TrackSpeedStatisticsAnalyzer.TRACK_MEAN_SPEED );
 		list.add( TrackSpeedStatisticsAnalyzer.TRACK_MEDIAN_SPEED );
 		list.add( TrackSpeedStatisticsAnalyzer.TRACK_STD_SPEED );
+
 		list.add( TrackLinearVelocityAnalyzer.TRACK_LINEAR_VELOCITY );
-		// Add track mean intensity analyzer TODO
-		// Add track median intensity analyzer TODO
-		// Add track std intensity analyzer TODO
+
+		list.add( TrackSpotIntensityAnalyzer.TRACK_MEAN_INTENSITY );
+		list.add( TrackSpotIntensityAnalyzer.TRACK_MEDIAN_INTENSITY );
+		list.add( TrackSpotIntensityAnalyzer.TRACK_STD_INTENSITY );
+
 		list.add( TrackVelocityThresholder.MEAN_VELOCITY_NO_PAUSES );
 		list.add( TrackVelocityThresholder.NUMBER_OF_PAUSES );
 		list.add( TrackVelocityThresholder.PAUSE_MEAN_DURATION );

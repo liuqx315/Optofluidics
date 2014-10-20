@@ -10,6 +10,7 @@ import javax.swing.ImageIcon;
 import org.scijava.plugin.Plugin;
 
 import com.optofluidics.trackmate.features.track.TrackLinearVelocityAnalyzer;
+import com.optofluidics.trackmate.features.track.TrackSpotIntensityAnalyzer;
 
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.LoadTrackMatePlugIn_;
@@ -192,6 +193,7 @@ public class VelocityAnalysisAction extends AbstractTMAction
 			{
 				final Settings settings = trackmate.getSettings();
 				settings.addTrackAnalyzer( new TrackLinearVelocityAnalyzer() );
+				settings.addTrackAnalyzer( new TrackSpotIntensityAnalyzer() );
 				new TrackFeatureCalculator( trackmate.getModel(), settings ).process();
 			}
 
