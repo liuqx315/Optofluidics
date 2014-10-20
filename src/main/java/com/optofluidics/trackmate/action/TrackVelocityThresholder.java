@@ -409,11 +409,11 @@ public class TrackVelocityThresholder implements Algorithm
 	 * FEATURE DECLARATION
 	 */
 
-	private static final String NUMBER_OF_PAUSES = "NUMBER_OF_PAUSES";
+	public static final String NUMBER_OF_PAUSES = "NUMBER_OF_PAUSES";
 
-	private static final String PAUSE_MEAN_DURATION = "PAUSE_MEAN_DURATION";
+	public static final String PAUSE_MEAN_DURATION = "PAUSE_MEAN_DURATION";
 
-	private static final String MEAN_VELOCITY_NO_PAUSES = "MEAN_VELOCITY_NO_PAUSES";
+	public static final String MEAN_VELOCITY_NO_PAUSES = "MEAN_VELOCITY_NO_PAUSES";
 
 	private static final Collection< String > FEATURES;
 
