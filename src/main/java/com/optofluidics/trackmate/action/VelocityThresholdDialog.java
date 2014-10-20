@@ -38,6 +38,7 @@ public class VelocityThresholdDialog extends JDialog
 		super( frame, DIALOG_TITLE, true );
 		setSize( new Dimension( 250, 260 ) );
 		setResizable( false );
+		super.setLocationRelativeTo( frame );
 
 		setDefaultCloseOperation( JDialog.DO_NOTHING_ON_CLOSE );
 		addWindowListener( new WindowAdapter()
