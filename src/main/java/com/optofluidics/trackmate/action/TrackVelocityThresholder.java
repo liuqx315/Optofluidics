@@ -131,64 +131,92 @@ public class TrackVelocityThresholder implements Algorithm
 
 			boolean inGap = false;
 			int nImmobile = 0;
-			final MovingAverage avg = new MovingAverage( velocities, smoothingWindow );
-			for ( int i = 0; i < velocities.length; i++ )
+
+			if ( velocities.length > smoothingWindow )
 			{
-				final double v = avg.next();
-				final DefaultWeightedEdge edge = ledges.get( i );
-
-				if ( v < velocityThreshold )
+				// Use moving average
+				final MovingAverage avg = new MovingAverage( velocities, smoothingWindow );
+				for ( int i = 0; i < velocities.length; i++ )
 				{
-					if ( inGap )
-					{
-						// Already in gap.
-						nImmobile++;
-					}
-					else
-					{
-						// New gap.
-						inGap = true;
-						nImmobile = 1;
-						gap = new ArrayList< DefaultWeightedEdge >();
-					}
+					final double v = avg.next();
+					final DefaultWeightedEdge edge = ledges.get( i );
 
-					gap.add( edge );
-
-				}
-				else
-				{
-
-					if ( inGap )
+					if ( v < velocityThreshold )
 					{
-						// Was in a gap, and leaving it.
-						inGap = false;
-						if ( nImmobile > minConsecutiveFrames )
+						if ( inGap )
 						{
-							// Gap was long enough; we can store it.
-							gaps.add( gap );
-							// We are now also sure that the previous run is
-							// over and can store it.
-							runs.add( run );
-							run = new ArrayList< DefaultWeightedEdge >();
+							// Already in gap.
+							nImmobile++;
 						}
 						else
 						{
-							// Gap was not long enough. We add past edges to the
-							// run, and carry on with the run.
-							run.addAll( gap );
+							// New gap.
+							inGap = true;
+							nImmobile = 1;
+							gap = new ArrayList< DefaultWeightedEdge >();
 						}
-					}
 
-					run.add( edge );
+						gap.add( edge );
+
+					}
+					else
+					{
+
+						if ( inGap )
+						{
+							// Was in a gap, and leaving it.
+							inGap = false;
+							if ( nImmobile > minConsecutiveFrames )
+							{
+								// Gap was long enough; we can store it.
+								gaps.add( gap );
+								// We are now also sure that the previous run is
+								// over and can store it.
+								runs.add( run );
+								run = new ArrayList< DefaultWeightedEdge >();
+							}
+							else
+							{
+								// Gap was not long enough. We add past edges to
+								// the run, and carry on with the run.
+								run.addAll( gap );
+							}
+						}
+
+						run.add( edge );
+					}
 				}
+				if ( null != gap && !gaps.contains( gap ) )
+				{
+					gaps.add( gap );
+				}
+				if ( null != run && !runs.contains( run ) )
+				{
+					runs.add( run );
+				}
+
 			}
-			if ( null != gap && !gaps.contains( gap ) )
+			else
 			{
-				gaps.add( gap );
-			}
-			if ( null != run && !runs.contains( run ) )
-			{
-				runs.add( run );
+				// Track too short, make it one segment and don't use moving
+				// average.
+				double totalVelocity = 0;
+				int nVelocity = 0;
+				for ( final DefaultWeightedEdge edge : ledges )
+				{
+					final double v = fm.getEdgeFeature( edge, EdgeVelocityAnalyzer.VELOCITY );
+					totalVelocity += v;
+					nVelocity++;
+				}
+				final double meanVelocity = totalVelocity / nVelocity;
+				if ( meanVelocity > velocityThreshold )
+				{
+					runs.add( ledges );
+				}
+				else
+				{
+					gaps.add( ledges );
+				}
 			}
 
 			/*
@@ -239,7 +267,36 @@ public class TrackVelocityThresholder implements Algorithm
 			 * Log
 			 */
 
-			logger.log( "Track " + trackModel.name( id ) + " has " + gaps.size() + " pauses and " + runs.size() + " runs.\n" );
+			String str;
+			if ( gaps.size() > 0 && runs.size() > 0 )
+			{
+				str = "Track " + trackModel.name( id ) + " has ";
+				if ( gaps.size() > 1 )
+				{
+					str += gaps.size() + " pauses and ";
+				}
+				else
+				{
+					str += "1 pause and ";
+				}
+				if ( runs.size() > 1 )
+				{
+					str += runs.size() + " runs.\n";
+				}
+				else
+				{
+					str += "1 run.\n";
+				}
+			}
+			else if ( gaps.size() == 0 )
+			{
+				str = "Track " + trackModel.name( id ) + " has no pauses and " + runs.size() + " run.\n";
+			}
+			else
+			{
+				str = "Track " + trackModel.name( id ) + " has " + gaps.size() + " pause and no runs.\n";
+			}
+			logger.log( str );
 		}
 		return true;
 	}

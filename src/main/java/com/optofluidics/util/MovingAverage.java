@@ -27,6 +27,9 @@ public class MovingAverage
 	{
 		this.source = source;
 		this.smoothingWindow = smoothingWindow;
+
+		if ( source.length <= smoothingWindow ) { throw new IllegalArgumentException( "[MovingAverage] The source array cannot be smaller in size than the smoothing window. Found " + source.length + ", expected at least " + smoothingWindow + "." ); }
+
 		this.index = 0;
 		this.queue = new FixedSizeCircularBuffer( smoothingWindow );
 		for ( int i = 0; i < smoothingWindow / 2; i++ )
