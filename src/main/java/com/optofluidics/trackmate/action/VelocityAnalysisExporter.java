@@ -9,6 +9,7 @@ import java.util.Set;
 import com.optofluidics.trackmate.features.track.TrackLinearVelocityAnalyzer;
 import com.optofluidics.trackmate.features.track.TrackSpotIntensityAnalyzer;
 
+import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.FeatureModel;
 import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.features.track.TrackBranchingAnalyzer;
@@ -59,8 +60,6 @@ public class VelocityAnalysisExporter
 
 	public void exportToImageJTable()
 	{
-		System.out.println( model );// DEBUG
-
 		final FeatureModel fm = model.getFeatureModel();
 
 		final Set< Integer > trackIDs = model.getTrackModel().trackIDs( true );
@@ -76,11 +75,17 @@ public class VelocityAnalysisExporter
 			trackTable.addLabel( "" + trackNumber++ );
 			for ( final String feature : trackFeatures )
 			{
-				System.out.println( feature );// DEBUG
-				System.out.println( fm.getTrackFeatureDimensions().get( feature ) );// DEBUG
-
-				final String dimStr = TMUtils.getUnitsFor( fm.getTrackFeatureDimensions().get( feature ), model.getSpaceUnits(), model.getTimeUnits() );
-				final String featureStr = fm.getTrackFeatureNames().get( feature ) + " (" + dimStr + ")";
+				final Dimension dimension = fm.getTrackFeatureDimensions().get( feature );
+				final String dimStr;
+				if ( dimension.equals( Dimension.NONE ) )
+				{
+					dimStr = "";
+				}
+				else
+				{
+					dimStr = " (" + TMUtils.getUnitsFor( fm.getTrackFeatureDimensions().get( feature ), model.getSpaceUnits(), model.getTimeUnits() ) + ")";
+				}
+				final String featureStr = fm.getTrackFeatureNames().get( feature ) + dimStr;
 
 				final Double val = fm.getTrackFeature( trackID, feature );
 				if ( null == val )
