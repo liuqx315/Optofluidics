@@ -31,7 +31,7 @@ public class TrackSpotIntensityAnalyzer implements TrackAnalyzer, MultiThreaded,
 	/*
 	 * CONSTANTS
 	 */
-	public static final String KEY = "SpotFeature";
+	public static final String KEY = "TRACK_SPOT_INTENSITY";
 
 	public static final String TRACK_MEAN_INTENSITY = "TRACK_MEAN_INTENSITY";
 
