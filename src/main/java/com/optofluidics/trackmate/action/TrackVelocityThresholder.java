@@ -135,10 +135,25 @@ public class TrackVelocityThresholder implements Algorithm
 			if ( velocities.length > smoothingWindow )
 			{
 				// Use moving average
-				final MovingAverage avg = new MovingAverage( velocities, smoothingWindow );
-				for ( int i = 0; i < velocities.length; i++ )
+				final double[] smoothedVs;
+				if ( smoothingWindow < 2 )
 				{
-					final double v = avg.next();
+					smoothedVs = velocities;
+				}
+				else
+				{
+					smoothedVs = new double[ velocities.length ];
+					final MovingAverage avg = new MovingAverage( velocities, smoothingWindow );
+					for ( int i = 0; i < velocities.length; i++ )
+					{
+						final double v = avg.next();
+						smoothedVs[ i ] = v;
+					}
+				}
+
+				for ( int i = 0; i < smoothedVs.length; i++ )
+				{
+					final double v = smoothedVs[ i ];
 					final DefaultWeightedEdge edge = ledges.get( i );
 
 					if ( v < velocityThreshold )
