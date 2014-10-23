@@ -109,7 +109,7 @@ public class VelocityAnalysisAction extends AbstractTMAction
 		 * Export
 		 */
 
-		final VelocityAnalysisExporter exporter = new VelocityAnalysisExporter( model );
+		final VelocityAnalysisExporter exporter = new VelocityAnalysisExporter( model, controller.getSelectionModel() );
 		exporter.exportToImageJTable();
 
 		logger.log( "Created results table.\n" );
