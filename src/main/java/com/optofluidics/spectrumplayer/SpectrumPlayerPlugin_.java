@@ -8,7 +8,6 @@ import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
 import ij.WindowManager;
-import ij.io.FileInfo;
 import ij.measure.Calibration;
 import ij.plugin.PlugIn;
 
@@ -25,10 +24,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -179,10 +175,16 @@ public class SpectrumPlayerPlugin_ implements PlugIn
 		userCheckImpDimensions( imp );
 
 		/*
-		 * Retrirve the metadata file for the image
+		 * Retrieve the metadata file for the image
 		 */
 
-		loadMetadata( imp );
+		final MetadataReader mdReader = new MetadataReader( imp );
+		if ( !mdReader.checkInput() || !mdReader.process() )
+		{
+			IJ.error( "Problem reading the metadata file:\n" + mdReader.getErrorMessage() );
+			return;
+		}
+		frameTimestamps = mdReader.getResult();
 
 		/*
 		 * Load spectrum in memory.
@@ -238,116 +240,6 @@ public class SpectrumPlayerPlugin_ implements PlugIn
 			}
 		};
 		sliceObserver = new SliceObserver( imp, listener );
-	}
-
-	private void loadMetadata( final ImagePlus imp )
-	{
-		final FileInfo finfo = imp.getOriginalFileInfo();
-
-		// Build file name
-		final int dotIndex = finfo.fileName.lastIndexOf( ".ome.tif" );
-		if ( dotIndex < 0 )
-		{
-			IJ.log( "The image file is not an .ome.tiff file." );
-		}
-		final String mdFileName = finfo.fileName.substring( 0, dotIndex ) + "_metadata.txt";
-		final File md = new File( finfo.directory, mdFileName );
-
-		IJ.log( "Parsing metadata file: " + md );
-
-		/*
-		 * Find first date
-		 */
-
-		Date date = null;
-		Scanner scanner = null;
-		try
-		{
-			scanner = new Scanner( md );
-			final Pattern datePattern = Pattern.compile( "\"Time\": \"(.+)\"," );
-			scanner.useDelimiter( "\"FrameKey-(\\d)-(\\d)-(\\d)\":" );
-			while ( scanner.hasNext() )
-			{
-				final String str = scanner.next();
-				final Matcher matcher = datePattern.matcher( str );
-				if ( matcher.find() )
-				{
-					final String dateStr = matcher.group( 1 );
-					final SimpleDateFormat dateFormat = new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss" );
-					try
-					{
-						date = dateFormat.parse( dateStr );
-					}
-					catch ( final ParseException e )
-					{
-						IJ.log( "Date found, but in incorrect format:\nGot " + dateStr + " and expected something like " + dateFormat );
-						e.printStackTrace();
-					}
-					break;
-				}
-			}
-		}
-		catch ( final FileNotFoundException e )
-		{
-			IJ.log( "Could not find metadata file: " + md );
-		}
-		finally
-		{
-			scanner.close();
-		}
-
-		if ( null == date )
-		{
-			IJ.log( "Could not find a date in the metadate file." );
-		}
-		IJ.log( "Found a starting date for imaging: " + date );
-
-		/*
-		 * Find all deltaT
-		 * 
-		 * Important!! We suppose the metadata does not miss a single frame.
-		 */
-
-		final Pattern deltaTPattern = Pattern.compile( "\"ElapsedTime-ms\": (\\d+)," );
-		final List< Integer > elapsedTimes = new ArrayList< Integer >();
-		try
-		{
-			scanner = new Scanner( md );
-			scanner.useDelimiter( "\"FrameKey-(\\d)-(\\d)-(\\d)\":" );
-			while ( scanner.hasNext() )
-			{
-				final String str = scanner.next();
-				final Matcher matcher = deltaTPattern.matcher( str );
-				while ( matcher.find() )
-				{
-					final String dtStr = matcher.group( 1 );
-					final int dt = Integer.parseInt( dtStr );
-					elapsedTimes.add( Integer.valueOf( dt ) );
-				}
-
-			}
-		}
-		catch ( final FileNotFoundException e )
-		{
-			IJ.log( "Could not find metadata file: " + md );
-		}
-		finally
-		{
-			scanner.close();
-		}
-
-		IJ.log( "Found " + elapsedTimes.size() + " time-stamps registered in the metadata file." );
-
-		/*
-		 * Build absolute date
-		 */
-
-		frameTimestamps = new ArrayList< Date >( elapsedTimes.size() );
-		for ( final Integer dt : elapsedTimes )
-		{
-			final Date frameDate = new Date( date.getTime() + dt.longValue() );
-			frameTimestamps.add( frameDate );
-		}
 	}
 
 	private void displaySpectrum( final int targetSpectrum )
