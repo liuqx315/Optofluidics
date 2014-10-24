@@ -113,7 +113,7 @@ public class TrackLinearVelocityAnalyzer implements TrackAnalyzer, MultiThreaded
 						}
 
 						final double dt = maxT - minT;
-						final double linVel = Math.sqrt( endSpot.squareDistanceTo( startSpot ) / dt );
+						final double linVel = Math.sqrt( endSpot.squareDistanceTo( startSpot ) ) / dt;
 						fm.putTrackFeature( trackID, TRACK_LINEAR_VELOCITY, linVel );
 					}
 				}

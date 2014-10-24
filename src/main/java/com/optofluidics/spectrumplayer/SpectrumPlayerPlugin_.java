@@ -22,6 +22,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -57,15 +58,18 @@ public class SpectrumPlayerPlugin_ implements PlugIn
 
 	private static File previousPath = null;
 
-	private ArrayList< double[] > spectra;
+	private List< double[] > spectra;
 
-	private ArrayList< Date > spectraTimeStamps;
+	private List< Date > spectraTimestamps;
+
+	private List< Date > frameTimestamps;
 
 	private double[] X;
 
 	private DefaultXYDataset dataset;
 
 	private SliceObserver sliceObserver;
+
 
 	@Override
 	public void run( final String command )
@@ -170,6 +174,22 @@ public class SpectrumPlayerPlugin_ implements PlugIn
 		}
 		userCheckImpDimensions( imp );
 
+		/*
+		 * Retrieve the metadata file for the image
+		 */
+
+		final MetadataReader mdReader = new MetadataReader( imp );
+		if ( !mdReader.checkInput() || !mdReader.process() )
+		{
+			IJ.error( "Problem reading the metadata file:\n" + mdReader.getErrorMessage() );
+			return;
+		}
+		frameTimestamps = mdReader.getResult();
+
+		/*
+		 * Load spectrum in memory.
+		 */
+
 		final File spectrumFile = new File( spectrumPath );
 		if ( !spectrumFile.exists() || !spectrumFile.canRead() )
 		{
@@ -182,15 +202,14 @@ public class SpectrumPlayerPlugin_ implements PlugIn
 			return;
 		}
 
-		// Load spectrum in memory.
 		loadSpectrum( spectrumFile );
 
 		// Make time relative
-		final long[] time = new long[ spectraTimeStamps.size() ];
-		final long t0 = spectraTimeStamps.get( 0 ).getTime();
+		final long[] time = new long[ spectraTimestamps.size() ];
+		final long t0 = spectraTimestamps.get( 0 ).getTime();
 		for ( int i = 0; i < time.length; i++ )
 		{
-			time[ i ] = spectraTimeStamps.get( i ).getTime() - t0;
+			time[ i ] = spectraTimestamps.get( i ).getTime() - t0;
 		}
 
 		// Prepare time stamp "map".
@@ -203,11 +222,7 @@ public class SpectrumPlayerPlugin_ implements PlugIn
 			 * IMPORTANT! We suppose that the spectrum timestamps are sorted in
 			 * INCREASING order.
 			 */
-
-			// IMPORTANT! The time of a frame is calculated from its time
-			// interval.
-
-			while ( currentSpectrum < spectraTimeStamps.size() && spectraTimeStamps.get( currentSpectrum ) <= frame )
+			while ( currentSpectrum < spectraTimestamps.size() && spectraTimestamps.get( currentSpectrum ).before( frameTimestamps.get( frame ) ) )
 			{
 				currentSpectrum++;
 			}
@@ -353,7 +368,7 @@ public class SpectrumPlayerPlugin_ implements PlugIn
 
 			// Spectra * timestamps.
 			spectra = new ArrayList< double[] >();
-			spectraTimeStamps = new ArrayList< Date >();
+			spectraTimestamps = new ArrayList< Date >();
 			while ( ( nextLine = reader.readNext() ) != null )
 			{
 				line++;
@@ -389,7 +404,7 @@ public class SpectrumPlayerPlugin_ implements PlugIn
 				if ( nextLine == null )
 				{
 					IJ.log( "Warning: Spectrum on line " + line + " is missing its time-stamp." );
-					spectraTimeStamps.add( spectraTimeStamps.get( spectraTimeStamps.size() - 1 ) );
+					spectraTimestamps.add( spectraTimestamps.get( spectraTimestamps.size() - 1 ) );
 					// Add last one instead.
 					break;
 				}
@@ -399,12 +414,12 @@ public class SpectrumPlayerPlugin_ implements PlugIn
 				try
 				{
 					final Date date = tsFormat.parse( ts );
-					spectraTimeStamps.add( date );
+					spectraTimestamps.add( date );
 				}
 				catch ( final ParseException e )
 				{
 					IJ.log( "Warning: Time-stamp on line " + line + " cound not be interpreted." );
-					spectraTimeStamps.add( spectraTimeStamps.get( spectraTimeStamps.size() - 1 ) );
+					spectraTimestamps.add( spectraTimestamps.get( spectraTimestamps.size() - 1 ) );
 					// Add last one instead.
 					continue;
 				}
@@ -446,10 +461,10 @@ public class SpectrumPlayerPlugin_ implements PlugIn
 	public static void main( final String[] args )
 	{
 		ImageJ.main( args );
-		IJ.open( "http://imagej.nih.gov/ij/images/bat-cochlea-volume.zip" );
+		IJ.open( "/Users/JeanYves/Documents/Development/Optofluidics/test2_stack_100ms-rate_MMStack.ome.tif" );
 		// new SpectrumPlayerPlugin_().run(
 		// "image=bat-cochlea-volume.tif spectrum=../24-12.csv" );
-		new SpectrumPlayerPlugin_().run( "image=bat-cochlea-volume.tif spectrum=../t6_76-5.csv" );
+		new SpectrumPlayerPlugin_().run( "image=test2_stack_100ms-rate_MMStack.ome.tif spectrum=../t6_76-5.csv" );
 		// new SpectrumPlayerPlugin_().run( "" );
 	}
 
