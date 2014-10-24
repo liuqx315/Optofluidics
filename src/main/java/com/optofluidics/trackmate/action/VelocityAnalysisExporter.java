@@ -13,6 +13,7 @@ import java.util.Set;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
 
+import com.optofluidics.trackmate.features.manual.TrackPausingAnalyzer;
 import com.optofluidics.trackmate.features.track.TrackLinearVelocityAnalyzer;
 import com.optofluidics.trackmate.features.track.TrackSpotIntensityAnalyzer;
 
@@ -66,9 +67,9 @@ public class VelocityAnalysisExporter
 		list.add( TrackSpotIntensityAnalyzer.TRACK_MEDIAN_INTENSITY );
 		list.add( TrackSpotIntensityAnalyzer.TRACK_STD_INTENSITY );
 
-		list.add( TrackVelocityThresholder.MEAN_VELOCITY_NO_PAUSES );
-		list.add( TrackVelocityThresholder.NUMBER_OF_PAUSES );
-		list.add( TrackVelocityThresholder.PAUSE_MEAN_DURATION );
+		list.add( TrackPausingAnalyzer.MEAN_VELOCITY_NO_PAUSES );
+		list.add( TrackPausingAnalyzer.NUMBER_OF_PAUSES );
+		list.add( TrackPausingAnalyzer.PAUSE_MEAN_DURATION );
 
 		list.add( TrackIndexAnalyzer.TRACK_ID );
 
@@ -78,7 +79,6 @@ public class VelocityAnalysisExporter
 	public void exportToImageJTable()
 	{
 		final FeatureModel fm = model.getFeatureModel();
-
 		final Set< Integer > trackIDs = model.getTrackModel().trackIDs( true );
 
 		// Create table

@@ -1,12 +1,9 @@
 package com.optofluidics.trackmate.action;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import javax.swing.JFrame;
@@ -22,9 +19,10 @@ import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.xy.DefaultXYDataset;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
+import com.optofluidics.trackmate.features.manual.MotionTypeEdgeAnalyzer;
+import com.optofluidics.trackmate.features.manual.TrackPausingAnalyzer;
 import com.optofluidics.util.MovingAverage;
 
-import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.FeatureModel;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Model;
@@ -94,18 +92,6 @@ public class TrackVelocityThresholder implements Algorithm
 	{
 		final TrackModel trackModel = model.getTrackModel();
 		final FeatureModel fm = model.getFeatureModel();
-
-		/*
-		 * Declare features
-		 * 
-		 * Now, this is going to be a bit weird: This action is going to
-		 * generate new track & edge features. They were not declared before the
-		 * first time this action is run, and they are not in sync against
-		 * modification of the model. Let's see how it rolls in the GUI.
-		 */
-
-		fm.declareTrackFeatures( TRACK_FEATURES, TRACK_FEATURE_NAMES, TRACK_FEATURE_SHOTRT_NAMES, TRACK_FEATURE_DIMENSIONS, TRACK_IS_INT );
-		fm.declareEdgeFeatures( EDGE_FEATURES, EDGE_FEATURE_NAMES, EDGE_FEATURE_SHOTRT_NAMES, EDGE_FEATURE_DIMENSIONS, EDGE_IS_INT );
 
 		final Set< Integer > trackIDs = trackModel.unsortedTrackIDs( true );
 		// final Integer id = trackIDs.iterator().next();
@@ -241,7 +227,7 @@ public class TrackVelocityThresholder implements Algorithm
 
 			// Number of pauses.
 			final int nPauses = gaps.size();
-			fm.putTrackFeature( id, NUMBER_OF_PAUSES, Double.valueOf( nPauses ) );
+			fm.putTrackFeature( id, TrackPausingAnalyzer.NUMBER_OF_PAUSES, Double.valueOf( nPauses ) );
 
 			// Mean duration of pauses.
 			double totalPauseDuration = 0d;
@@ -260,12 +246,12 @@ public class TrackVelocityThresholder implements Algorithm
 				// Movement type = pausing
 				for ( final DefaultWeightedEdge edge : gap2 )
 				{
-					fm.putEdgeFeature( edge, MOVEMENT_TYPE, Double.valueOf( PAUSING.doubleValue() ) );
+					fm.putEdgeFeature( edge, MotionTypeEdgeAnalyzer.MOVEMENT_TYPE, Double.valueOf( MotionTypeEdgeAnalyzer.PAUSING.doubleValue() ) );
 				}
 
 			}
 			final double meanPauseDuration = totalPauseDuration / nPauses;
-			fm.putTrackFeature( id, PAUSE_MEAN_DURATION, Double.valueOf( meanPauseDuration ) );
+			fm.putTrackFeature( id, TrackPausingAnalyzer.PAUSE_MEAN_DURATION, Double.valueOf( meanPauseDuration ) );
 
 			// Mean velocity without pauses.
 			double totalVelocity = 0d;
@@ -283,11 +269,11 @@ public class TrackVelocityThresholder implements Algorithm
 					nVelocity++;
 
 					// Movement type = running
-					fm.putEdgeFeature( edge, MOVEMENT_TYPE, Double.valueOf( RUNNING.doubleValue() ) );
+					fm.putEdgeFeature( edge, MotionTypeEdgeAnalyzer.MOVEMENT_TYPE, Double.valueOf( MotionTypeEdgeAnalyzer.RUNNING.doubleValue() ) );
 				}
 			}
 			final double meanVelocity = totalVelocity / nVelocity;
-			fm.putTrackFeature( id, MEAN_VELOCITY_NO_PAUSES, Double.valueOf( meanVelocity ) );
+			fm.putTrackFeature( id, TrackPausingAnalyzer.MEAN_VELOCITY_NO_PAUSES, Double.valueOf( meanVelocity ) );
 
 			/*
 			 * Log
@@ -429,85 +415,6 @@ public class TrackVelocityThresholder implements Algorithm
 			return 0;
 		}
 
-	}
-
-	/*
-	 * TRACK FEATURE DECLARATION
-	 */
-
-	public static final String NUMBER_OF_PAUSES = "NUMBER_OF_PAUSES";
-
-	public static final String PAUSE_MEAN_DURATION = "PAUSE_MEAN_DURATION";
-
-	public static final String MEAN_VELOCITY_NO_PAUSES = "MEAN_VELOCITY_NO_PAUSES";
-
-	public static final String MOVEMENT_TYPE = "MOVEMENT_TYPE";
-
-	public static final Integer PAUSING = 0;
-
-	public static final Integer RUNNING = 1;
-
-	private static final Collection< String > TRACK_FEATURES;
-
-	private static final Map< String, String > TRACK_FEATURE_NAMES;
-
-	private static final Map< String, String > TRACK_FEATURE_SHOTRT_NAMES;
-
-	private static final Map< String, Dimension > TRACK_FEATURE_DIMENSIONS;
-
-	private static final Map< String, Boolean > TRACK_IS_INT;
-
-	private static final Collection< String > EDGE_FEATURES;
-
-	private static final Map< String, String > EDGE_FEATURE_NAMES;
-
-	private static final Map< String, String > EDGE_FEATURE_SHOTRT_NAMES;
-
-	private static final Map< String, Dimension > EDGE_FEATURE_DIMENSIONS;
-
-	private static final Map< String, Boolean > EDGE_IS_INT;
-
-	static
-	{
-		TRACK_FEATURES = new ArrayList< String >( 3 );
-		TRACK_FEATURES.add( NUMBER_OF_PAUSES );
-		TRACK_FEATURES.add( PAUSE_MEAN_DURATION );
-		TRACK_FEATURES.add( MEAN_VELOCITY_NO_PAUSES );
-
-		TRACK_FEATURE_NAMES = new HashMap< String, String >( 3 );
-		TRACK_FEATURE_NAMES.put( NUMBER_OF_PAUSES, "Number of pauses" );
-		TRACK_FEATURE_NAMES.put( PAUSE_MEAN_DURATION, "Mean pause duration" );
-		TRACK_FEATURE_NAMES.put( MEAN_VELOCITY_NO_PAUSES, "Mean velocity w/o pauses" );
-
-		TRACK_FEATURE_SHOTRT_NAMES = new HashMap< String, String >( 3 );
-		TRACK_FEATURE_SHOTRT_NAMES.put( NUMBER_OF_PAUSES, "N pauses" );
-		TRACK_FEATURE_SHOTRT_NAMES.put( PAUSE_MEAN_DURATION, "Pause duration" );
-		TRACK_FEATURE_SHOTRT_NAMES.put( MEAN_VELOCITY_NO_PAUSES, "Mean V. w/o pauses" );
-
-		TRACK_FEATURE_DIMENSIONS = new HashMap< String, Dimension >( 3 );
-		TRACK_FEATURE_DIMENSIONS.put( NUMBER_OF_PAUSES, Dimension.NONE );
-		TRACK_FEATURE_DIMENSIONS.put( PAUSE_MEAN_DURATION, Dimension.TIME );
-		TRACK_FEATURE_DIMENSIONS.put( MEAN_VELOCITY_NO_PAUSES, Dimension.VELOCITY );
-
-		TRACK_IS_INT = new HashMap< String, Boolean >( 3 );
-		TRACK_IS_INT.put( NUMBER_OF_PAUSES, Boolean.TRUE );
-		TRACK_IS_INT.put( PAUSE_MEAN_DURATION, Boolean.FALSE );
-		TRACK_IS_INT.put( MEAN_VELOCITY_NO_PAUSES, Boolean.FALSE );
-
-		EDGE_FEATURES = new ArrayList< String >( 1 );
-		EDGE_FEATURES.add( MOVEMENT_TYPE );
-
-		EDGE_FEATURE_NAMES = new HashMap< String, String >( 1 );
-		EDGE_FEATURE_NAMES.put( MOVEMENT_TYPE, "Movement type" );
-
-		EDGE_FEATURE_SHOTRT_NAMES = new HashMap< String, String >( 3 );
-		EDGE_FEATURE_SHOTRT_NAMES.put( MOVEMENT_TYPE, "Mov. type" );
-
-		EDGE_FEATURE_DIMENSIONS = new HashMap< String, Dimension >( 1 );
-		EDGE_FEATURE_DIMENSIONS.put( MOVEMENT_TYPE, Dimension.NONE );
-
-		EDGE_IS_INT = new HashMap< String, Boolean >( 1 );
-		EDGE_IS_INT.put( MOVEMENT_TYPE, Boolean.TRUE );
 	}
 
 }
