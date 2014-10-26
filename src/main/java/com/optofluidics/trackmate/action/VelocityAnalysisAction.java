@@ -9,13 +9,19 @@ import javax.swing.ImageIcon;
 
 import org.scijava.plugin.Plugin;
 
+import com.optofluidics.trackmate.features.track.TrackLinearVelocityAnalyzer;
+import com.optofluidics.trackmate.features.track.TrackSpotIntensityAnalyzer;
+
 import fiji.plugin.trackmate.Dimension;
+import fiji.plugin.trackmate.LoadTrackMatePlugIn_;
 import fiji.plugin.trackmate.Model;
+import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.TrackMatePlugIn_;
 import fiji.plugin.trackmate.action.AbstractTMAction;
 import fiji.plugin.trackmate.action.TrackMateAction;
 import fiji.plugin.trackmate.action.TrackMateActionFactory;
+import fiji.plugin.trackmate.features.TrackFeatureCalculator;
 import fiji.plugin.trackmate.gui.TrackMateGUIController;
 import fiji.plugin.trackmate.util.TMUtils;
 
@@ -160,9 +166,9 @@ public class VelocityAnalysisAction extends AbstractTMAction
 
 	public static void main( final String[] args )
 	{
-//		final File file = new File( "../Pos0.xml" );
-//		final File file = new File( "/Users/tinevez/Google Drive/Optofluidics/TestVelocityAnalysis.xml" );
-//		final File file = new File( "e:/Users/JeanYves/Documents/Projects/Optofluidics/MovieForTradeshow/Movie.xml" );
+		//		final File file = new File( "../Pos0.xml" );
+		//		final File file = new File( "/Users/tinevez/Google Drive/Optofluidics/TestVelocityAnalysis.xml" );
+		//		final File file = new File( "e:/Users/JeanYves/Documents/Projects/Optofluidics/MovieForTradeshow/Movie.xml" );
 
 		// final TmXmlReader reader = new TmXmlReader( file );
 		// if ( !reader.isReadingOk() )
@@ -187,26 +193,30 @@ public class VelocityAnalysisAction extends AbstractTMAction
 
 		ImageJ.main( args );
 
-//		final LoadTrackMatePlugIn_ plugin = new LoadTrackMatePlugIn_()
-//		{
-//			/*
-//			 * Ensure in this snippet that custom track analyzer are triggered.
-//			 */
-//
-//			@Override
-//			protected void postRead( final TrackMate trackmate )
-//			{
-//				final Settings settings = trackmate.getSettings();
-//				settings.addTrackAnalyzer( new TrackLinearVelocityAnalyzer() );
-//				settings.addTrackAnalyzer( new TrackSpotIntensityAnalyzer() );
-//				new TrackFeatureCalculator( trackmate.getModel(), settings ).process();
-//			}
-//
-//		};
-//		plugin.run( file.getAbsolutePath() );
+		final LoadTrackMatePlugIn_ plugin = new LoadTrackMatePlugIn_()
+		{
+			/*
+			 * Ensure in this snippet that custom track analyzer are triggered.
+			 */
 
-//		final File imfile = new File( "../Pos0_full.tif" );
-		final File imfile = new File( "/Users/tinevez/Google Drive/Optofluidics/TestVelocityAnalysis.tif" );
+			@Override
+			protected void postRead( final TrackMate trackmate )
+			{
+				final Settings settings = trackmate.getSettings();
+				settings.addTrackAnalyzer( new TrackLinearVelocityAnalyzer() );
+				settings.addTrackAnalyzer( new TrackSpotIntensityAnalyzer() );
+				new TrackFeatureCalculator( trackmate.getModel(), settings ).process();
+			}
+
+		};
+
+		// final File file = new File(
+		// "/Users/JeanYves/Google Drive/Optofluidics/TestVelocityAnalysis.xml"
+		// );
+		// plugin.run( file.getAbsolutePath() );
+
+		// final File imfile = new File( "../Pos0_full.tif" );
+		final File imfile = new File( "/Users/JeanYves/Google Drive/Optofluidics/TestVelocityAnalysis.tif" );
 		new TrackMatePlugIn_().run( imfile.getAbsolutePath() );
 
 	}
