@@ -23,9 +23,9 @@ public class MotionTypeEdgeAnalyzer implements EdgeAnalyzer
 
 	public static final String MOVEMENT_TYPE = "MOVEMENT_TYPE";
 
-	public static final Integer PAUSING = 0;
+	public static final Double PAUSING = Double.valueOf( 0 );
 
-	public static final Integer RUNNING = 1;
+	public static final Double RUNNING = Double.valueOf( 1 );
 
 	private static final List< String > FEATURES;
 

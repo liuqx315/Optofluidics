@@ -251,7 +251,7 @@ public class TrackVelocityThresholder implements Algorithm
 				// Movement type = pausing
 				for ( final DefaultWeightedEdge edge : gap2 )
 				{
-					fm.putEdgeFeature( edge, MotionTypeEdgeAnalyzer.MOVEMENT_TYPE, Double.valueOf( MotionTypeEdgeAnalyzer.PAUSING.doubleValue() ) );
+					fm.putEdgeFeature( edge, MotionTypeEdgeAnalyzer.MOVEMENT_TYPE, MotionTypeEdgeAnalyzer.PAUSING );
 				}
 
 			}
@@ -274,7 +274,7 @@ public class TrackVelocityThresholder implements Algorithm
 					nVelocity++;
 
 					// Movement type = running
-					fm.putEdgeFeature( edge, MotionTypeEdgeAnalyzer.MOVEMENT_TYPE, Double.valueOf( MotionTypeEdgeAnalyzer.RUNNING.doubleValue() ) );
+					fm.putEdgeFeature( edge, MotionTypeEdgeAnalyzer.MOVEMENT_TYPE, MotionTypeEdgeAnalyzer.RUNNING );
 				}
 			}
 			final double meanVelocity = totalVelocity / nVelocity;
