@@ -27,19 +27,19 @@ public class MotionTypeEdgeAnalyzer implements EdgeAnalyzer
 
 	public static final Double RUNNING = Double.valueOf( 1 );
 
-	private static final List< String > FEATURES;
+	public static final List< String > FEATURES;
 
-	private static final Map< String, String > FEATURE_NAMES;
+	public static final Map< String, String > FEATURE_NAMES;
 
-	private static final Map< String, String > FEATURE_SHORT_NAMES;
+	public static final Map< String, String > FEATURE_SHORT_NAMES;
 
-	private static final Map< String, Dimension > FEATURE_DIMENSIONS;
+	public static final Map< String, Dimension > FEATURE_DIMENSIONS;
 
-	private static final Map< String, Boolean > IS_INT;
+	public static final Map< String, Boolean > IS_INT;
 
-	private static final String INFO_TEXT = "<html>Determines and stores the motion type at the liml level. A value of 0 stands for edges that pause; of 1 for edges that run.</html>";
+	public static final String INFO_TEXT = "<html>Determines and stores the motion type at the liml level. A value of 0 stands for edges that pause; of 1 for edges that run.</html>";
 
-	private static final String NAME = "Edge motion type";
+	public static final String NAME = "Edge motion type";
 
 	static
 	{

@@ -23,19 +23,19 @@ public class EdgeSmoothedVelocityAnalyzer implements EdgeAnalyzer
 
 	public static final String SMOOTHED_VELOCITY = "SMOOTHED_VELOCITY";
 
-	private static final List< String > FEATURES;
+	public static final List< String > FEATURES;
 
-	private static final Map< String, String > FEATURE_NAMES;
+	public static final Map< String, String > FEATURE_NAMES;
 
-	private static final Map< String, String > FEATURE_SHORT_NAMES;
+	public static final Map< String, String > FEATURE_SHORT_NAMES;
 
-	private static final Map< String, Dimension > FEATURE_DIMENSIONS;
+	public static final Map< String, Dimension > FEATURE_DIMENSIONS;
 
-	private static final Map< String, Boolean > IS_INT;
+	public static final Map< String, Boolean > IS_INT;
 
-	private static final String INFO_TEXT = "<html>Return the smoothed velocities over the neighbor edges within the current track.</html>";
+	public static final String INFO_TEXT = "<html>Return the smoothed velocities over the neighbor edges within the current track.</html>";
 
-	private static final String NAME = "Smoothed velocity";
+	public static final String NAME = "Smoothed velocity";
 
 	static
 	{
