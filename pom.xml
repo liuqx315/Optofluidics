@@ -44,6 +44,10 @@
 		<groupId>net.imglib2</groupId>
 		<artifactId>imglib2-algorithms-gpl</artifactId>
 	</dependency>
+	<dependency>
+		<groupId>net.sf.jgrapht</groupId>
+		<artifactId>jgrapht</artifactId>
+	</dependency>
 	</dependencies>
 
 	<build>
