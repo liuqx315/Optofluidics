@@ -8,7 +8,6 @@ import java.util.Set;
 
 import javax.swing.JFrame;
 
-import net.imglib2.ExtendedRandomAccessibleInterval;
 import net.imglib2.algorithm.Algorithm;
 import net.imglib2.algorithm.gauss3.Gauss3;
 import net.imglib2.exception.IncompatibleTypeException;
@@ -16,6 +15,7 @@ import net.imglib2.img.array.ArrayImg;
 import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.img.basictypeaccess.array.DoubleArray;
 import net.imglib2.type.numeric.real.DoubleType;
+import net.imglib2.view.ExtendedRandomAccessibleInterval;
 import net.imglib2.view.Views;
 
 import org.jfree.chart.ChartFactory;
@@ -160,11 +160,11 @@ public class TrackVelocityThresholder implements Algorithm
 			// Smooth and threshold
 			final List< List< DefaultWeightedEdge >> gaps = new ArrayList< List< DefaultWeightedEdge > >();
 			final List< List< DefaultWeightedEdge >> runs = new ArrayList< List< DefaultWeightedEdge > >();
-			List< DefaultWeightedEdge > gap = null;
+			List< DefaultWeightedEdge > gap = new ArrayList< DefaultWeightedEdge >();
 			List< DefaultWeightedEdge > run = new ArrayList< DefaultWeightedEdge >();
 
-			boolean inGap = false;
-			int nImmobile = 0;
+			boolean inPause = false;
+			int nSection = 0;
 
 			for ( int i = 0; i < velocities.length; i++ )
 			{
@@ -173,17 +173,36 @@ public class TrackVelocityThresholder implements Algorithm
 
 				if ( v < velocityThreshold )
 				{
-					if ( inGap )
+					if ( inPause )
 					{
 						// Already in gap.
-						nImmobile++;
+						nSection++;
 					}
 					else
 					{
 						// New gap.
-						inGap = true;
-						nImmobile = 1;
-						gap = new ArrayList< DefaultWeightedEdge >();
+						inPause = true;
+						// First check if the preceding run was long enough.
+						if ( nSection > minConsecutiveFrames )
+						{
+							// Yes, it was long enough, so we can consider it a
+							// run.
+							if ( !runs.contains( run ) )
+							{
+								runs.add( run );
+							}
+
+							// Start a new gap
+							nSection = 1;
+							gap = new ArrayList< DefaultWeightedEdge >();
+						}
+						else
+						{
+							// No, not long enough. So we simply add the
+							// previous edges to the current gap.
+							gap.addAll( run );
+						}
+
 					}
 
 					gap.add( edge );
@@ -192,17 +211,19 @@ public class TrackVelocityThresholder implements Algorithm
 				else
 				{
 
-					if ( inGap )
+					if ( inPause )
 					{
 						// Was in a gap, and leaving it.
-						inGap = false;
-						if ( nImmobile > minConsecutiveFrames )
+						inPause = false;
+						if ( nSection > minConsecutiveFrames )
 						{
 							// Gap was long enough; we can store it.
-							gaps.add( gap );
-							// We are now also sure that the previous run is
-							// over and can store it.
-							runs.add( run );
+							if ( !gaps.contains( gap ) )
+							{
+								gaps.add( gap );
+							}
+							// Start a new run
+							nSection = 1;
 							run = new ArrayList< DefaultWeightedEdge >();
 						}
 						else
