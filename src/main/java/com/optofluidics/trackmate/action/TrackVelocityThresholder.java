@@ -6,8 +6,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 
-import javax.swing.JFrame;
-
 import net.imglib2.algorithm.Algorithm;
 import net.imglib2.algorithm.gauss3.Gauss3;
 import net.imglib2.exception.IncompatibleTypeException;
@@ -18,13 +16,6 @@ import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.view.ExtendedRandomAccessibleInterval;
 import net.imglib2.view.Views;
 
-import org.jfree.chart.ChartFactory;
-import org.jfree.chart.ChartPanel;
-import org.jfree.chart.JFreeChart;
-import org.jfree.chart.plot.PlotOrientation;
-import org.jfree.chart.plot.XYPlot;
-import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
-import org.jfree.data.xy.DefaultXYDataset;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
 import com.optofluidics.trackmate.features.manual.EdgeSmoothedVelocityAnalyzer;
@@ -42,7 +33,6 @@ import fiji.plugin.trackmate.features.edges.EdgeVelocityAnalyzer;
 public class TrackVelocityThresholder implements Algorithm
 {
 
-
 	private static final String BASE_ERR_MSG = "[TrackVelocityThresholder] ";
 
 	private final Model model;
@@ -58,7 +48,6 @@ public class TrackVelocityThresholder implements Algorithm
 	private Logger logger = Logger.VOID_LOGGER;
 
 	private final Comparator< ? super DefaultWeightedEdge > edgeTimeComparator;
-
 
 	public TrackVelocityThresholder( final Model model, final double velocityThreshold, final int minConsecutiveFrames, final int smoothingWindow )
 	{
@@ -114,7 +103,7 @@ public class TrackVelocityThresholder implements Algorithm
 			final double[] dxs = new double[ ledges.size() ];
 			final double[] dys = new double[ ledges.size() ];
 			final double[] dzs = new double[ ledges.size() ];
-			final double[] dts = new double[ledges.size()];
+			final double[] dts = new double[ ledges.size() ];
 			for ( int i = 0; i < ledges.size(); i++ )
 			{
 				final DefaultWeightedEdge edge = ledges.get( i );
@@ -135,7 +124,7 @@ public class TrackVelocityThresholder implements Algorithm
 				dxs[ i ] = dx;
 				dys[ i ] = dy;
 				dzs[ i ] = dz;
-				dts[i] = dt;
+				dts[ i ] = dt;
 			}
 
 			// Smooth displacements
@@ -150,7 +139,7 @@ public class TrackVelocityThresholder implements Algorithm
 				final double dx = sdxs[ i ];
 				final double dy = sdys[ i ];
 				final double dz = sdzs[ i ];
-				final double dt = dts[i];
+				final double dt = dts[ i ];
 				final double v = Math.sqrt( dx * dx + dy * dy + dz * dx ) / dt;
 				velocities[ i ] = v;
 
@@ -163,7 +152,7 @@ public class TrackVelocityThresholder implements Algorithm
 			List< DefaultWeightedEdge > gap = new ArrayList< DefaultWeightedEdge >();
 			List< DefaultWeightedEdge > run = new ArrayList< DefaultWeightedEdge >();
 
-			boolean inPause = false;
+			boolean inPause = velocities[ 0 ] < velocityThreshold;
 			int nSection = 0;
 
 			for ( int i = 0; i < velocities.length; i++ )
@@ -201,6 +190,7 @@ public class TrackVelocityThresholder implements Algorithm
 							// No, not long enough. So we simply add the
 							// previous edges to the current gap.
 							gap.addAll( run );
+							nSection++;
 						}
 
 					}
@@ -231,21 +221,49 @@ public class TrackVelocityThresholder implements Algorithm
 							// Gap was not long enough. We add past edges to
 							// the run, and carry on with the run.
 							run.addAll( gap );
+							nSection++;
 						}
+					}
+					else
+					{
+						nSection++;
 					}
 
 					run.add( edge );
 				}
 			}
-			if ( null != gap && !gaps.contains( gap ) )
-			{
-				gaps.add( gap );
-			}
-			if ( null != run && !runs.contains( run ) )
-			{
-				runs.add( run );
-			}
 
+			// Deal with the last one.
+			if ( nSection <= minConsecutiveFrames )
+			{
+				if ( run.size() > gap.size() )
+				{
+					run.addAll( gap );
+					if ( !runs.contains( run ) )
+					{
+						runs.add( run );
+					}
+				}
+				else
+				{
+					gap.addAll( run );
+					if ( !gaps.contains( gap ) )
+					{
+						gaps.add( gap );
+					}
+				}
+			}
+			else
+			{
+				if ( null != gap && !gaps.contains( gap ) )
+				{
+					gaps.add( gap );
+				}
+				if ( null != run && !runs.contains( run ) )
+				{
+					runs.add( run );
+				}
+			}
 
 			/*
 			 * Assign feature values.
@@ -338,80 +356,6 @@ public class TrackVelocityThresholder implements Algorithm
 		}
 
 		return true;
-	}
-
-	private void debug( final List< DefaultWeightedEdge > ledges, final List< List< DefaultWeightedEdge >> runs, final List< List< DefaultWeightedEdge >> gaps )
-	{
-		final FeatureModel fm = model.getFeatureModel();
-
-		// Collect raw velocities
-		final double[] x = new double[ ledges.size() ];
-		final double[] xs = new double[ ledges.size() ];
-		final double[] t = new double[ ledges.size() ];
-		for ( int i = 0; i < ledges.size(); i++ )
-		{
-			final DefaultWeightedEdge edge = ledges.get( i );
-			final double vel = fm.getEdgeFeature( edge, EdgeVelocityAnalyzer.VELOCITY );
-			final double svel = fm.getEdgeFeature( edge, EdgeSmoothedVelocityAnalyzer.SMOOTHED_VELOCITY );
-			final double time = fm.getEdgeFeature( edge, EdgeTimeLocationAnalyzer.TIME );
-			x[ i ] = vel;
-			xs[ i ] = svel;
-			t[ i ] = time;
-		}
-
-		final DefaultXYDataset dataset = new DefaultXYDataset();
-		// dataset.addSeries( "Raw", new double[][] { t, x } );
-		dataset.addSeries( "Smooth", new double[][] { t, xs } );
-
-		int index = 0;
-		for ( final List< DefaultWeightedEdge > run : runs )
-		{
-			index++;
-			final double[] xr = new double[ run.size() ];
-			final double[] tr = new double[ run.size() ];
-			for ( int i = 0; i < run.size(); i++ )
-			{
-				final DefaultWeightedEdge edge = run.get( i );
-				final double vel = fm.getEdgeFeature( edge, EdgeVelocityAnalyzer.VELOCITY );
-				final double time = fm.getEdgeFeature( edge, EdgeTimeLocationAnalyzer.TIME );
-				xr[ i ] = vel;
-				tr[ i ] = time;
-			}
-			dataset.addSeries( "Run " + index, new double[][] { tr, xr } );
-		}
-
-		index = 0;
-		for ( final List< DefaultWeightedEdge > gap : gaps )
-		{
-			index++;
-			final double[] xr = new double[ gap.size() ];
-			final double[] tr = new double[ gap.size() ];
-			for ( int i = 0; i < gap.size(); i++ )
-			{
-				final DefaultWeightedEdge edge = gap.get( i );
-				final double vel = fm.getEdgeFeature( edge, EdgeVelocityAnalyzer.VELOCITY );
-				final double time = fm.getEdgeFeature( edge, EdgeTimeLocationAnalyzer.TIME );
-				xr[ i ] = vel;
-				tr[ i ] = time;
-			}
-			dataset.addSeries( "Gap " + index, new double[][] { tr, xr } );
-		}
-
-		final JFreeChart chart = ChartFactory.createScatterPlot( "Velocities", "Time", "V", dataset, PlotOrientation.VERTICAL, true,
-				false, // tooltips
-				false // urls
-				);
-		final XYPlot plot = ( XYPlot ) chart.getPlot();
-		final XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer();
-		renderer.setSeriesLinesVisible( 0, true );
-		plot.setRenderer( renderer );
-
-		final ChartPanel chartPanel = new ChartPanel( chart );
-		chartPanel.setPreferredSize( new java.awt.Dimension( 500, 270 ) );
-		final JFrame frame = new JFrame( "Velocities" );
-		frame.setContentPane( chartPanel );
-		frame.pack();
-		frame.setVisible( true );
 	}
 
 	private static final double[] gaussianSmooth( final double sigma, final double[] source )
