@@ -4,8 +4,11 @@ import ij.ImageJ;
 
 import java.awt.Frame;
 import java.io.File;
+import java.util.Iterator;
 
 import javax.swing.ImageIcon;
+
+import net.imglib2.util.Util;
 
 import org.scijava.plugin.Plugin;
 
@@ -65,6 +68,23 @@ public class VelocityAnalysisAction extends AbstractTMAction
 
 		final Model model = trackmate.getModel();
 		final String velocityUnits = TMUtils.getUnitsFor( Dimension.VELOCITY, model.getSpaceUnits(), model.getTimeUnits() );
+
+		/*
+		 * Determine best threshold.
+		 */
+
+		logger.log( "Determining velocity threshold estimate...\n" );
+		final double[] linVels = new double[ model.getTrackModel().nTracks( true ) ];
+		final Iterator< Integer > iterator = model.getTrackModel().trackIDs( true ).iterator();
+		for ( int i = 0; i < linVels.length; i++ )
+		{
+			final Integer id = iterator.next();
+			final double val = model.getFeatureModel().getTrackFeature( id, TrackLinearVelocityAnalyzer.TRACK_LINEAR_VELOCITY ).doubleValue();
+			linVels[ i ] = val;
+		}
+		final double estimate = Util.median( linVels );
+		logger.log( "Found threshold estimate = " + estimate + " " + velocityUnits + '\n' );
+		velocityThreshold = estimate;
 
 		/*
 		 * Show dialog
