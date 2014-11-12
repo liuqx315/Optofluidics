@@ -49,7 +49,7 @@ public class TrackSpotIntensityAnalyzer implements TrackAnalyzer, MultiThreaded,
 
 	public static final Map< String, Boolean > IS_INT = new HashMap< String, Boolean >( 3 );
 
-	private static final String INFO_TEXT = "<html>This track analyzer computes track intensity statistics based on averaging the track spots mean intensity feature values.</html>";
+	private static final String INFO_TEXT = "<html>This track analyzer computes track intensity statistics based on averaging the track spots total intensity feature values.</html>";
 
 	static
 	{
@@ -96,7 +96,7 @@ public class TrackSpotIntensityAnalyzer implements TrackAnalyzer, MultiThreaded,
 	@Override
 	public void process( final Collection< Integer > trackIDs, final Model model )
 	{
-		final String spotFeature = SpotIntensityAnalyzerFactory.MEAN_INTENSITY;
+		final String spotFeature = SpotIntensityAnalyzerFactory.TOTAL_INTENSITY; // MEAN_INTENSITY;
 
 		if ( trackIDs.isEmpty() ) { return; }
 
