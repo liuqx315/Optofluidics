@@ -32,6 +32,8 @@ import org.jfree.data.Range;
 import org.jfree.data.xy.DefaultXYDataset;
 import org.jfree.data.xy.XYDataset;
 
+import com.optofluidics.Main;
+
 import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.ModelChangeEvent;
 import fiji.plugin.trackmate.SelectionModel;
@@ -47,14 +49,17 @@ import fiji.plugin.trackmate.visualization.SpotColorGenerator;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
 /**
- * Returns the profile of 1D images.
+ * A TrackMate model view that specializes for image sequences with individual
+ * frames being a single line.
  * 
- * @author Jean-Yves Tinevez
+ * @author Jean-Yves Tinevez - 2014
  */
-public class ColumnImgProfiler extends AbstractTrackMateModelView
+public class ProfileView extends AbstractTrackMateModelView
 {
 
-	private static final String TITLE = "Image profiler";
+	private static final String TITLE = "Profile view";
+
+	static final String KEY = "PROFILEVIEW";
 
 	private final double[] Y;
 
@@ -84,7 +89,9 @@ public class ColumnImgProfiler extends AbstractTrackMateModelView
 
 	private ProfileOverlay profileOverlay;
 
-	public ColumnImgProfiler( final Model model, final SelectionModel selectionModel, final ImagePlus imp )
+	private MouseWheelListener mlListener;
+
+	public ProfileView( final Model model, final SelectionModel selectionModel, final ImagePlus imp )
 	{
 		super( model, selectionModel );
 		this.imp = imp;
@@ -144,7 +151,6 @@ public class ColumnImgProfiler extends AbstractTrackMateModelView
 		kymographOverlay = new KymographOverlay( model, kymograph, displaySettings, imp.getCalibration().pixelWidth );
 		kymograph.getOverlay().add( kymographOverlay );
 
-
 		/*
 		 * Dataset
 		 */
@@ -183,7 +189,7 @@ public class ColumnImgProfiler extends AbstractTrackMateModelView
 		 * MouseWheel listener
 		 */
 
-		final MouseWheelListener mlListener = new MouseWheelListener()
+		mlListener = new MouseWheelListener()
 		{
 			@Override
 			public void mouseWheelMoved( final MouseWheelEvent e )
@@ -219,6 +225,7 @@ public class ColumnImgProfiler extends AbstractTrackMateModelView
 		 */
 
 		final JFrame frame = new JFrame( TITLE );
+		frame.setIconImage( Main.OPTOFLUIDICS_ICON.getImage() );
 		frame.addMouseWheelListener( mlListener );
 		frame.setContentPane( panel );
 		frame.pack();
@@ -228,7 +235,7 @@ public class ColumnImgProfiler extends AbstractTrackMateModelView
 		slider.setValue( 0 );
 	}
 
-	public void displayFrame(final int frame)
+	public void displayFrame( final int frame )
 	{
 		this.frame = frame;
 		refresh();
@@ -238,8 +245,9 @@ public class ColumnImgProfiler extends AbstractTrackMateModelView
 	{
 
 		// create the chart...
-		final JFreeChart chart = ChartFactory.createXYLineChart( title,
-				unit, // x axis label
+		final JFreeChart chart = ChartFactory.createXYLineChart( title, unit, // x
+				// axis
+				// label
 				"#", // y axis label
 				dataset, // data
 				PlotOrientation.VERTICAL, false, // include legend
@@ -283,29 +291,26 @@ public class ColumnImgProfiler extends AbstractTrackMateModelView
 	@Override
 	public void clear()
 	{
-		// TODO Auto-generated method stub
-
+		// Unimplemented
 	}
 
 	@Override
 	public void centerViewOn( final Spot spot )
 	{
-		// TODO Auto-generated method stub
-
+		final int frame = spot.getFeature( Spot.FRAME ).intValue();
+		displayFrame( frame );
 	}
 
 	@Override
 	public String getKey()
 	{
-		// TODO Auto-generated method stub
-		return null;
+		return KEY;
 	}
 
 	@Override
 	public void modelChanged( final ModelChangeEvent event )
 	{
-		// TODO Auto-generated method stub
-
+		refresh();
 	}
 
 	/*
@@ -337,10 +342,10 @@ public class ColumnImgProfiler extends AbstractTrackMateModelView
 
 		ImageJ.main( args );
 
-		//		final File file = new File( "samples/SUM_FakeTracks.tif" );
-		//		final ImagePlus imp = new ImagePlus( file.toString() );
+		// final File file = new File( "samples/SUM_FakeTracks.tif" );
+		// final ImagePlus imp = new ImagePlus( file.toString() );
 		//
-		//		final Model model = new Model();
+		// final Model model = new Model();
 
 		final File file = new File( "samples/SUM_FakeTracks.xml" );
 		final TmXmlReader reader = new TmXmlReader( file );
@@ -355,7 +360,7 @@ public class ColumnImgProfiler extends AbstractTrackMateModelView
 		reader.readSettings( settings, null, null, null, null, null );
 		final SelectionModel selectionModel = new SelectionModel( model );
 
-		final ColumnImgProfiler profiler = new ColumnImgProfiler( model, selectionModel, settings.imp );
+		final ProfileView profiler = new ProfileView( model, selectionModel, settings.imp );
 		profiler.setDisplaySettings( TrackMateModelView.KEY_TRACK_COLORING, new PerTrackFeatureColorGenerator( model, TrackIndexAnalyzer.TRACK_ID ) );
 		final SpotColorGenerator scg = new SpotColorGenerator( model );
 		scg.setFeature( SpotIntensityAnalyzerFactory.MAX_INTENSITY );
