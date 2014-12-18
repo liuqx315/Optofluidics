@@ -369,6 +369,7 @@ public class ColumnImgProfiler extends AbstractTrackMateModelView
 		scg.setFeature( SpotIntensityAnalyzerFactory.MAX_INTENSITY );
 		profiler.setDisplaySettings( TrackMateModelView.KEY_SPOT_COLORING, scg );
 		profiler.setDisplaySettings( TrackMateModelView.KEY_DISPLAY_SPOT_NAMES, true );
+		profiler.setDisplaySettings( TrackMateModelView.KEY_TRACK_DISPLAY_MODE, TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL_BACKWARD );
 
 		profiler.render();
 	}

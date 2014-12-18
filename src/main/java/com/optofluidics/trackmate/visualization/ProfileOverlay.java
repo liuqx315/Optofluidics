@@ -2,6 +2,7 @@ package com.optofluidics.trackmate.visualization;
 
 import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_SPOT_COLORING;
 
+import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.FontMetrics;
@@ -9,7 +10,9 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.geom.Rectangle2D;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
@@ -20,9 +23,9 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 
 import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.features.spot.SpotIntensityAnalyzerFactory;
 import fiji.plugin.trackmate.visualization.FeatureColorGenerator;
+import fiji.plugin.trackmate.visualization.TrackColorGenerator;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
 public class ProfileOverlay implements Overlay
@@ -32,22 +35,22 @@ public class ProfileOverlay implements Overlay
 
 	private int frame;
 
-	private Collection< DefaultWeightedEdge > edgeSelection;
+	private Collection< DefaultWeightedEdge > edgeSelection = new HashSet< DefaultWeightedEdge >();
 
-	private Collection< Spot > spotSelection;
-
-	private final SpotCollection spots;
+	private Collection< Spot > spotSelection = new HashSet< Spot >();
 
 	private FontMetrics fm;
 
+	private final Model model;
+
 	public ProfileOverlay( final Model model, final Map< String, Object > displaySettings )
 	{
-		this.spots = model.getSpots();
+		this.model = model;
 		this.displaySettings = displaySettings;
 	}
 
 	@Override
-	public void paintOverlay( final Graphics2D g2, final ChartPanel chartPanel )
+	public void paintOverlay( final Graphics2D g2d, final ChartPanel chartPanel )
 	{
 		final JFreeChart chart = chartPanel.getChart();
 		final XYPlot plot = chart.getXYPlot();
@@ -58,19 +61,19 @@ public class ProfileOverlay implements Overlay
 		 */
 
 		final boolean spotVisible = ( Boolean ) displaySettings.get( TrackMateModelView.KEY_SPOTS_VISIBLE );
-		if ( spotVisible && spots.getNSpots( true ) != 0 )
+		if ( spotVisible && model.getSpots().getNSpots( true ) > 0 )
 		{
 			final double radiusRatio = ( Double ) displaySettings.get( TrackMateModelView.KEY_SPOT_RADIUS_RATIO );
 			@SuppressWarnings( "unchecked" )
 			final FeatureColorGenerator< Spot > colorGenerator = ( FeatureColorGenerator< Spot > ) displaySettings.get( KEY_SPOT_COLORING );
 
-			g2.setStroke( new BasicStroke( 1.0f ) );
-			g2.setRenderingHint( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON );
+			g2d.setStroke( new BasicStroke( 1.0f ) );
+			g2d.setRenderingHint( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON );
 
 			final boolean spotNameVisible = ( Boolean ) displaySettings.get( TrackMateModelView.KEY_DISPLAY_SPOT_NAMES );
-			fm = g2.getFontMetrics();
+			fm = g2d.getFontMetrics();
 
-			for ( final Spot spot : spots.iterable( frame, true ) )
+			for ( final Spot spot : model.getSpots().iterable( frame, true ) )
 			{
 
 				if ( spotSelection != null && spotSelection.contains( spot ) )
@@ -79,16 +82,16 @@ public class ProfileOverlay implements Overlay
 				}
 
 				final Color color = colorGenerator.color( spot );
-				g2.setColor( color );
+				g2d.setColor( color );
 
-				drawSpot( spot, g2, plot, plotArea, radiusRatio, spotNameVisible );
+				drawSpot( spot, g2d, plot, plotArea, radiusRatio, spotNameVisible );
 			}
 
 			// Deal with spot selection
 			if ( null != spotSelection )
 			{
-				g2.setStroke( new BasicStroke( 2.0f ) );
-				g2.setColor( TrackMateModelView.DEFAULT_HIGHLIGHT_COLOR );
+				g2d.setStroke( new BasicStroke( 2.0f ) );
+				g2d.setColor( TrackMateModelView.DEFAULT_HIGHLIGHT_COLOR );
 				for ( final Spot spot : spotSelection )
 				{
 					final int sFrame = spot.getFeature( Spot.FRAME ).intValue();
@@ -96,11 +99,200 @@ public class ProfileOverlay implements Overlay
 					{
 						continue;
 					}
-					drawSpot( spot, g2, plot, plotArea, radiusRatio, spotNameVisible );
+					drawSpot( spot, g2d, plot, plotArea, radiusRatio, spotNameVisible );
 				}
 			}
 		}
 
+		/*
+		 * Tracks
+		 */
+
+		final boolean tracksVisible = ( Boolean ) displaySettings.get( TrackMateModelView.KEY_TRACKS_VISIBLE );
+		if ( tracksVisible && model.getTrackModel().nTracks( true ) > 0 )
+		{
+
+			final int trackDisplayMode = ( Integer ) displaySettings.get( TrackMateModelView.KEY_TRACK_DISPLAY_MODE );
+			final int trackDisplayDepth = ( Integer ) displaySettings.get( TrackMateModelView.KEY_TRACK_DISPLAY_DEPTH );
+
+			// Determine bounds for limited view modes
+			int minT = 0;
+			int maxT = 0;
+			switch ( trackDisplayMode )
+			{
+			case TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL:
+			case TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL_QUICK:
+				minT = frame - trackDisplayDepth;
+				maxT = frame + trackDisplayDepth;
+				break;
+			case TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL_FORWARD:
+			case TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL_FORWARD_QUICK:
+				minT = frame;
+				maxT = frame + trackDisplayDepth;
+				break;
+			case TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL_BACKWARD:
+			case TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL_BACKWARD_QUICK:
+				minT = frame - trackDisplayDepth;
+				maxT = frame;
+				break;
+			}
+
+			float transparency;
+			Spot source, target;
+			final Set< Integer > filteredTrackKeys = model.getTrackModel().unsortedTrackIDs( true );
+
+			// Deal with highlighted edges first: brute and thick display
+			g2d.setStroke( new BasicStroke( 4.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND ) );
+			g2d.setColor( TrackMateModelView.DEFAULT_HIGHLIGHT_COLOR );
+			for ( final DefaultWeightedEdge edge : edgeSelection )
+			{
+				source = model.getTrackModel().getEdgeSource( edge );
+				target = model.getTrackModel().getEdgeTarget( edge );
+				drawEdge( source, target, g2d, plot, plotArea );
+			}
+
+			// The rest
+			final TrackColorGenerator colorGenerator = ( TrackColorGenerator ) displaySettings.get( TrackMateModelView.KEY_TRACK_COLORING );
+			g2d.setStroke( new BasicStroke( 2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND ) );
+			if ( trackDisplayMode == TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL || trackDisplayMode == TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL_QUICK )
+				g2d.setComposite( AlphaComposite.getInstance( AlphaComposite.SRC_OVER ) );
+
+			switch ( trackDisplayMode )
+			{
+
+			case TrackMateModelView.TRACK_DISPLAY_MODE_WHOLE:
+			{
+				for ( final Integer trackID : filteredTrackKeys )
+				{
+					colorGenerator.setCurrentTrackID( trackID );
+					Set< DefaultWeightedEdge > track;
+					synchronized ( model )
+					{
+						track = new HashSet< DefaultWeightedEdge >( model.getTrackModel().trackEdges( trackID ) );
+					}
+					for ( final DefaultWeightedEdge edge : track )
+					{
+						if ( edgeSelection.contains( edge ) )
+							continue;
+
+						source = model.getTrackModel().getEdgeSource( edge );
+						target = model.getTrackModel().getEdgeTarget( edge );
+						g2d.setColor( colorGenerator.color( edge ) );
+						drawEdge( source, target, g2d, plot, plotArea );
+					}
+				}
+				break;
+			}
+
+			case TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL_QUICK:
+			case TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL_FORWARD_QUICK:
+			case TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL_BACKWARD_QUICK:
+			{
+
+				g2d.setRenderingHint( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF );
+
+				for ( final Integer trackID : filteredTrackKeys )
+				{
+					colorGenerator.setCurrentTrackID( trackID );
+					Set< DefaultWeightedEdge > track;
+					synchronized ( model )
+					{
+						track = new HashSet< DefaultWeightedEdge >( model.getTrackModel().trackEdges( trackID ) );
+					}
+					for ( final DefaultWeightedEdge edge : track )
+					{
+						if ( edgeSelection.contains( edge ) )
+							continue;
+
+						source = model.getTrackModel().getEdgeSource( edge );
+						final int sourceFrame = source.getFeature( Spot.FRAME ).intValue();
+						if ( sourceFrame < minT || sourceFrame >= maxT )
+							continue;
+
+						target = model.getTrackModel().getEdgeTarget( edge );
+						g2d.setColor( colorGenerator.color( edge ) );
+						drawEdge( source, target, g2d, plot, plotArea );
+					}
+				}
+				break;
+			}
+
+			case TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL:
+			case TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL_FORWARD:
+			case TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL_BACKWARD:
+			{
+
+				g2d.setRenderingHint( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON );
+
+				for ( final Integer trackID : filteredTrackKeys )
+				{
+					colorGenerator.setCurrentTrackID( trackID );
+					final Set< DefaultWeightedEdge > track;
+					synchronized ( model )
+					{
+						track = new HashSet< DefaultWeightedEdge >( model.getTrackModel().trackEdges( trackID ) );
+					}
+					for ( final DefaultWeightedEdge edge : track )
+					{
+						if ( edgeSelection.contains( edge ) )
+							continue;
+
+						source = model.getTrackModel().getEdgeSource( edge );
+						final int sourceFrame = source.getFeature( Spot.FRAME ).intValue();
+						if ( sourceFrame < minT || sourceFrame >= maxT )
+							continue;
+
+						transparency = ( float ) ( 1 - Math.abs( ( double ) sourceFrame - frame ) / trackDisplayDepth );
+						target = model.getTrackModel().getEdgeTarget( edge );
+						g2d.setColor( colorGenerator.color( edge ) );
+						drawEdge( source, target, g2d, plot, plotArea, transparency );
+					}
+				}
+				break;
+
+			}
+
+			}
+
+		}
+
+	}
+
+	protected void drawEdge( final Spot source, final Spot target, final Graphics2D g2d, final XYPlot plot, final Rectangle2D plotArea, final float transparency )
+	{
+		final double x1val = source.getDoublePosition( 0 );
+		final double y1val = source.getFeature( SpotIntensityAnalyzerFactory.MAX_INTENSITY ).doubleValue();
+		final double x2val = target.getDoublePosition( 0 );
+		final double y2val = target.getFeature( SpotIntensityAnalyzerFactory.MAX_INTENSITY ).doubleValue();
+
+		final int px1 = ( int ) plot.getDomainAxis().valueToJava2D( x1val, plotArea, plot.getDomainAxisEdge() );
+		final int py1 = ( int ) plot.getRangeAxis().valueToJava2D( y1val, plotArea, plot.getRangeAxisEdge() );
+		final int px2 = ( int ) plot.getDomainAxis().valueToJava2D( x2val, plotArea, plot.getDomainAxisEdge() );
+		final int py2 = ( int ) plot.getRangeAxis().valueToJava2D( y2val, plotArea, plot.getRangeAxisEdge() );
+
+		if ( px1 < plotArea.getMinX() || px1 > plotArea.getMaxX() || px2 < plotArea.getMinX() || px2 > plotArea.getMaxX() ) { return; }
+		if ( px1 == px2 && py1 == py2 ) { return; }
+
+		g2d.setComposite( AlphaComposite.getInstance( AlphaComposite.SRC_OVER, transparency ) );
+		g2d.drawLine( px1, py1, px2, py2 );
+	}
+
+	protected void drawEdge( final Spot source, final Spot target, final Graphics2D g2d, final XYPlot plot, final Rectangle2D plotArea )
+	{
+		final double x1val = source.getDoublePosition( 0 );
+		final double y1val = source.getFeature( SpotIntensityAnalyzerFactory.MAX_INTENSITY ).doubleValue();
+		final double x2val = target.getDoublePosition( 0 );
+		final double y2val = target.getFeature( SpotIntensityAnalyzerFactory.MAX_INTENSITY ).doubleValue();
+
+		final int px1 = ( int ) plot.getDomainAxis().valueToJava2D( x1val, plotArea, plot.getDomainAxisEdge() );
+		final int py1 = ( int ) plot.getRangeAxis().valueToJava2D( y1val, plotArea, plot.getRangeAxisEdge() );
+		final int px2 = ( int ) plot.getDomainAxis().valueToJava2D( x2val, plotArea, plot.getDomainAxisEdge() );
+		final int py2 = ( int ) plot.getRangeAxis().valueToJava2D( y2val, plotArea, plot.getRangeAxisEdge() );
+
+		if ( px1 < plotArea.getMinX() || px1 > plotArea.getMaxX() || px2 < plotArea.getMinX() || px2 > plotArea.getMaxX() ) { return; }
+		if ( px1 == px2 && py1 == py2 ) { return; }
+
+		g2d.drawLine( px1, py1, px2, py2 );
 	}
 
 	protected void drawSpot( final Spot spot, final Graphics2D g2, final XYPlot plot, final Rectangle2D plotArea, final double radiusRatio, final boolean spotNameVisible )
