@@ -12,6 +12,7 @@ import net.imglib2.util.Util;
 
 import org.scijava.plugin.Plugin;
 
+import com.optofluidics.Main;
 import com.optofluidics.trackmate.features.manual.EdgeSmoothedVelocityAnalyzer;
 import com.optofluidics.trackmate.features.manual.MotionTypeEdgeAnalyzer;
 import com.optofluidics.trackmate.features.manual.TrackPausingAnalyzer;
@@ -39,8 +40,6 @@ public class VelocityAnalysisAction extends AbstractTMAction
 	private static final String NAME = "Nanotweezers velocity macro analysis";
 
 	private static final String KEY = "OPTOFLUIDICS_ANALYSIS";
-
-	private static final ImageIcon ICON = new ImageIcon( VelocityAnalysisAction.class.getResource( "OptofluidicsLogo_16.png" ) );
 
 	private static final double DEFAULT_VELOCITY_THRESHOLD = 0.5d;
 
@@ -176,7 +175,7 @@ public class VelocityAnalysisAction extends AbstractTMAction
 		@Override
 		public ImageIcon getIcon()
 		{
-			return ICON;
+			return Main.OPTOFLUIDICS_ICON;
 		}
 
 		@Override
@@ -189,8 +188,8 @@ public class VelocityAnalysisAction extends AbstractTMAction
 
 	public static void main( final String[] args )
 	{
-		final File file = new File( "../Pos0.xml" );
-		//		final File file = new File( "/Users/tinevez/Google Drive/Optofluidics/TestVelocityAnalysis.xml" );
+		// final File file = new File( "../Pos0.xml" );
+		final File file = new File( "/Users/JeanYves/Google Drive/Optofluidics/TestVelocityAnalysis.xml" );
 		//		final File file = new File( "e:/Users/JeanYves/Documents/Projects/Optofluidics/MovieForTradeshow/Movie.xml" );
 
 		// final TmXmlReader reader = new TmXmlReader( file );
@@ -238,14 +237,14 @@ public class VelocityAnalysisAction extends AbstractTMAction
 
 		};
 
-//		final File file = new File(
-//				"/Users/tinevez/Google Drive/Optofluidics/TestVelocityAnalysis.xml"
-//				);
+		//		final File file = new File(
+		//				"/Users/tinevez/Google Drive/Optofluidics/TestVelocityAnalysis.xml"
+		//				);
 		plugin.run( file.getAbsolutePath() );
 
-//		final File imfile = new File( "../Pos0_full.tif" );
-////		final File imfile = new File( "/Users/JeanYves/Google Drive/Optofluidics/TestVelocityAnalysis.tif" );
-//		new TrackMatePlugIn_().run( imfile.getAbsolutePath() );
+		//		final File imfile = new File( "../Pos0_full.tif" );
+		////		final File imfile = new File( "/Users/JeanYves/Google Drive/Optofluidics/TestVelocityAnalysis.tif" );
+		//		new TrackMatePlugIn_().run( imfile.getAbsolutePath() );
 
 	}
 
