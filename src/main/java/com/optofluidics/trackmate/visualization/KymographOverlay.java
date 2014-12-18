@@ -2,7 +2,6 @@ package com.optofluidics.trackmate.visualization;
 
 import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.TrackColorGenerator;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import ij.ImagePlus;
@@ -38,14 +37,14 @@ public class KymographOverlay extends Roi
 
 	private int frame;
 
-	private final double[] calibration;
+	private final double dx;
 
-	public KymographOverlay( final Model model, final ImagePlus imp, final Map< String, Object > displaySettings )
+	public KymographOverlay( final Model model, final ImagePlus imp, final Map< String, Object > displaySettings, final double dx )
 	{
 		super( 0, 0, imp );
 		this.model = model;
 		this.displaySettings = displaySettings;
-		this.calibration = TMUtils.getSpatialCalibration( imp );
+		this.dx = dx;
 	}
 
 	@Override
@@ -80,8 +79,9 @@ public class KymographOverlay extends Roi
 		 */
 
 		final boolean tracksVisible = ( Boolean ) displaySettings.get( TrackMateModelView.KEY_TRACKS_VISIBLE );
-		if ( !tracksVisible || model.getTrackModel().nTracks( true ) == 0 )
+		if ( !tracksVisible || model.getTrackModel().nTracks( true ) == 0 ) {
 			return;
+		}
 
 		final int trackDisplayMode = ( Integer ) displaySettings.get( TrackMateModelView.KEY_TRACK_DISPLAY_MODE );
 		final int trackDisplayDepth = ( Integer ) displaySettings.get( TrackMateModelView.KEY_TRACK_DISPLAY_DEPTH );
@@ -126,7 +126,9 @@ public class KymographOverlay extends Roi
 		final TrackColorGenerator colorGenerator = ( TrackColorGenerator ) displaySettings.get( TrackMateModelView.KEY_TRACK_COLORING );
 		g2d.setStroke( new BasicStroke( 2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND ) );
 		if ( trackDisplayMode == TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL || trackDisplayMode == TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL_QUICK )
+		{
 			g2d.setComposite( AlphaComposite.getInstance( AlphaComposite.SRC_OVER ) );
+		}
 
 		switch ( trackDisplayMode )
 		{
@@ -144,7 +146,9 @@ public class KymographOverlay extends Roi
 				for ( final DefaultWeightedEdge edge : track )
 				{
 					if ( highlight.contains( edge ) )
+					{
 						continue;
+					}
 
 					source = model.getTrackModel().getEdgeSource( edge );
 					target = model.getTrackModel().getEdgeTarget( edge );
@@ -173,12 +177,16 @@ public class KymographOverlay extends Roi
 				for ( final DefaultWeightedEdge edge : track )
 				{
 					if ( highlight.contains( edge ) )
+					{
 						continue;
+					}
 
 					source = model.getTrackModel().getEdgeSource( edge );
 					final int sourceFrame = source.getFeature( Spot.FRAME ).intValue();
 					if ( sourceFrame < minT || sourceFrame >= maxT )
+					{
 						continue;
+					}
 
 					target = model.getTrackModel().getEdgeTarget( edge );
 					g2d.setColor( colorGenerator.color( edge ) );
@@ -206,12 +214,16 @@ public class KymographOverlay extends Roi
 				for ( final DefaultWeightedEdge edge : track )
 				{
 					if ( highlight.contains( edge ) )
+					{
 						continue;
+					}
 
 					source = model.getTrackModel().getEdgeSource( edge );
 					final int sourceFrame = source.getFeature( Spot.FRAME ).intValue();
 					if ( sourceFrame < minT || sourceFrame >= maxT )
+					{
 						continue;
+					}
 
 					transparency = ( float ) ( 1 - Math.abs( ( double ) sourceFrame - frame ) / trackDisplayDepth );
 					target = model.getTrackModel().getEdgeTarget( edge );
@@ -232,9 +244,9 @@ public class KymographOverlay extends Roi
 		final double x0i = source.getFeature( Spot.POSITION_X );
 		final double x1i = target.getFeature( Spot.POSITION_X );
 		// In pixel units
-		final double x0p = x0i / calibration[ 0 ] + 0.5;
+		final double x0p = x0i / dx + 0.5;
 		final double y0p = source.getFeature( Spot.FRAME ).intValue() + 0.5;
-		final double x1p = x1i / calibration[ 0 ] + 0.5;
+		final double x1p = x1i / dx + 0.5;
 		final double y1p = target.getFeature( Spot.FRAME ).intValue() + 0.5;
 		// Scale to image zoom
 		final double x0s = ( x0p - xcorner ) * magnification;
@@ -259,9 +271,9 @@ public class KymographOverlay extends Roi
 		final double x0i = source.getFeature( Spot.POSITION_X );
 		final double x1i = target.getFeature( Spot.POSITION_X );
 		// In pixel units
-		final double x0p = x0i / calibration[ 0 ] + 0.5;
+		final double x0p = x0i / dx + 0.5;
 		final double y0p = source.getFeature( Spot.FRAME ).intValue() + 0.5;
-		final double x1p = x1i / calibration[ 0 ] + 0.5;
+		final double x1p = x1i / dx + 0.5;
 		final double y1p = target.getFeature( Spot.FRAME ).intValue() + 0.5;
 		// Scale to image zoom
 		final double x0s = ( x0p - xcorner ) * magnification;

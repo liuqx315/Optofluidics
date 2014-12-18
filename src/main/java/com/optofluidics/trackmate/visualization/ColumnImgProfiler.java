@@ -142,7 +142,7 @@ public class ColumnImgProfiler extends AbstractTrackMateModelView
 
 		kymograph.show();
 		kymograph.setOverlay( new Overlay() );
-		kymographOverlay = new KymographOverlay( model, kymograph, displaySettings );
+		kymographOverlay = new KymographOverlay( model, kymograph, displaySettings, imp.getCalibration().pixelWidth );
 		kymograph.getOverlay().add( kymographOverlay );
 
 
@@ -236,7 +236,7 @@ public class ColumnImgProfiler extends AbstractTrackMateModelView
 
 		slider.setValue( 0 );
 	}
-	
+
 	public void displayFrame(final int frame)
 	{
 		this.frame = frame;
@@ -345,10 +345,10 @@ public class ColumnImgProfiler extends AbstractTrackMateModelView
 
 		ImageJ.main( args );
 
-//		final File file = new File( "samples/SUM_FakeTracks.tif" );
-//		final ImagePlus imp = new ImagePlus( file.toString() );
-//
-//		final Model model = new Model();
+		//		final File file = new File( "samples/SUM_FakeTracks.tif" );
+		//		final ImagePlus imp = new ImagePlus( file.toString() );
+		//
+		//		final Model model = new Model();
 
 		final File file = new File( "samples/SUM_FakeTracks.xml" );
 		final TmXmlReader reader = new TmXmlReader( file );
