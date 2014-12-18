@@ -37,8 +37,13 @@ import org.jfree.data.xy.XYDataset;
 import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.ModelChangeEvent;
 import fiji.plugin.trackmate.SelectionModel;
+import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
+import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
+import fiji.plugin.trackmate.visualization.PerTrackFeatureColorGenerator;
+import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
 /**
  * Returns the profile of 1D images.
@@ -111,9 +116,6 @@ public class ColumnImgProfiler extends AbstractTrackMateModelView
 		}
 		this.ymin = tempmin;
 		this.ymax = tempmax;
-
-
-		render();
 	}
 
 	public void map( final int t )
@@ -336,12 +338,26 @@ public class ColumnImgProfiler extends AbstractTrackMateModelView
 
 		ImageJ.main( args );
 
-		final File file = new File( "samples/SUM_FakeTracks.tif" );
-		final ImagePlus imp = new ImagePlus( file.toString() );
+//		final File file = new File( "samples/SUM_FakeTracks.tif" );
+//		final ImagePlus imp = new ImagePlus( file.toString() );
+//
+//		final Model model = new Model();
 
-		final Model model = new Model();
+		final File file = new File( "samples/SUM_FakeTracks.xml" );
+		final TmXmlReader reader = new TmXmlReader( file );
+		if ( !reader.isReadingOk() )
+		{
+			System.err.println( reader.getErrorMessage() );
+			return;
+		}
+
+		final Model model = reader.getModel();
+		final Settings settings = new Settings();
+		reader.readSettings( settings, null, null, null, null, null );
 		final SelectionModel selectionModel = new SelectionModel( model );
-		new ColumnImgProfiler( model, selectionModel, imp );
 
+		final ColumnImgProfiler profiler = new ColumnImgProfiler( model, selectionModel, settings.imp );
+		profiler.setDisplaySettings( TrackMateModelView.KEY_TRACK_COLORING, new PerTrackFeatureColorGenerator( model, TrackIndexAnalyzer.TRACK_ID ) );
+		profiler.render();
 	}
 }
