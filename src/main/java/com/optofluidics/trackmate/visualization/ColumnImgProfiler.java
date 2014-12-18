@@ -1,9 +1,11 @@
 package com.optofluidics.trackmate.visualization;
 
+import fiji.plugin.trackmate.Model;
+import fiji.plugin.trackmate.SelectionModel;
 import ij.ImageJ;
+import ij.ImagePlus;
+import ij.process.ImageProcessor;
 import io.scif.img.ImgIOException;
-import io.scif.img.ImgOpener;
-import io.scif.img.SCIFIOImgPlus;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -11,21 +13,14 @@ import java.awt.Dimension;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
-import java.util.List;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-
-import net.imglib2.RandomAccess;
-import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.type.numeric.RealType;
-import net.imglib2.type.numeric.integer.UnsignedByteType;
-import net.imglib2.util.Util;
-import net.imglib2.view.Views;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
@@ -41,7 +36,7 @@ import org.jfree.data.xy.XYDataset;
  * 
  * @author Jean-Yves Tinevez
  */
-public class ColumnImgProfiler< T extends RealType< T >>
+public class ColumnImgProfiler
 {
 
 	private static final String TITLE = "Image profiler";
@@ -49,12 +44,6 @@ public class ColumnImgProfiler< T extends RealType< T >>
 	private final double[] Y;
 
 	private final double[] X;
-
-	private final RandomAccess< T > ra;
-
-	private final int xmin;
-
-	private final int xmax;
 
 	private final String unit;
 
@@ -64,56 +53,71 @@ public class ColumnImgProfiler< T extends RealType< T >>
 
 	private final String title;
 
-	public ColumnImgProfiler( final RandomAccessibleInterval< T > source, final double dx, final String unit, final String title )
+	private final int tmax;
+
+	private final ImagePlus imp;
+
+	private final int width;
+
+	private final ImagePlus kymograph;
+
+	public ColumnImgProfiler( final Model model, final SelectionModel selectionModel, final ImagePlus imp )
 	{
-		this.unit = unit;
-		this.title = title;
-		if ( source.numDimensions() != 3 ) { throw new IllegalArgumentException( "ColumnImgProfiler only works for 3D images. N dims was " + source.numDimensions() ); }
-		if ( source.dimension( 1 ) != 1 ) { throw new IllegalArgumentException( "ColumnImgProfiler only works for 1D image sequence. Dimensionality was " + Util.printInterval( source ) ); }
-		this.ra = source.randomAccess();
-		this.xmin = ( int ) source.min( 2 );
-		this.xmax = ( int ) source.max( 2 );
-		this.Y = new double[ ( int ) source.dimension( 0 ) ];
+		this.imp = imp;
+		if ( imp.getHeight() != 1 ) { throw new IllegalArgumentException( "ColumnImgProfiler only works for 1D image sequence. Dimensionality was " + imp.getWidth() + " x " + imp.getHeight() ); }
+
+		this.kymograph = KymographGenerator.fromLineImage( imp );
+		this.unit = imp.getCalibration().getUnits();
+		this.title = imp.getShortTitle();
+		this.Y = new double[ imp.getWidth() ];
 		this.X = new double[ Y.length ];
 		for ( int i = 0; i < X.length; i++ )
 		{
-			X[ i ] = xmin + i * dx;
+			X[ i ] = i * imp.getCalibration().pixelWidth;
 		}
 
-		double tmin = Double.POSITIVE_INFINITY;
-		double tmax = Double.NEGATIVE_INFINITY;
-		for ( final T pixel : Views.iterable( source ) )
+		this.tmax = imp.getStackSize();
+		this.width = imp.getWidth();
+		double tempmin = Double.POSITIVE_INFINITY;
+		double tempmax = Double.NEGATIVE_INFINITY;
+		for ( int i = 0; i < tmax; i++ )
 		{
-			final double val = pixel.getRealDouble();
-			if ( val > tmax )
+			final double max = imp.getStack().getProcessor( i + 1 ).getMax();
+			if ( max > tempmax )
 			{
-				tmax = val;
+				tempmax = max;
 			}
-			if ( val < tmin )
+			final double min = imp.getStack().getProcessor( i + 1 ).getMin();
+			if ( min < tempmin )
 			{
-				tmin = val;
+				tempmin = min;
 			}
 		}
-		this.ymin = tmin;
-		this.ymax = tmax;
+		this.ymin = tempmin;
+		this.ymax = tempmax;
+
 
 		init();
 	}
 
-	public void map( final long t )
+	public void map( final int t )
 	{
-		if ( t < xmin || t > ymax ) { return; }
-		ra.setPosition( t, 2 );
-		ra.setPosition( xmin, 0 );
-		for ( int x = 0; x < Y.length; x++ )
+		if ( t < 0 || t >= tmax ) { return; }
+		final ImageProcessor ip = imp.getStack().getProcessor( t + 1 );
+		for ( int i = 0; i < width; i++ )
 		{
-			Y[ x ] = ra.get().getRealDouble();
-			ra.fwd( 0 );
+			Y[ i ] = ip.getf( i );
 		}
 	}
 
 	private void init()
 	{
+		/*
+		 * Kymograph
+		 */
+
+		kymograph.show();
+
 		/*
 		 * Dataset
 		 */
@@ -133,7 +137,7 @@ public class ColumnImgProfiler< T extends RealType< T >>
 		 * Slider
 		 */
 
-		final JSlider slider = new JSlider( xmin, xmax );
+		final JSlider slider = new JSlider( 0, tmax );
 		final ChangeListener listener = new ChangeListener()
 		{
 			@Override
@@ -175,7 +179,7 @@ public class ColumnImgProfiler< T extends RealType< T >>
 		frame.pack();
 		frame.setVisible( true );
 
-		slider.setValue( xmin );
+		slider.setValue( 0 );
 	}
 
 	private JFreeChart createChart( final XYDataset dataset )
@@ -211,16 +215,35 @@ public class ColumnImgProfiler< T extends RealType< T >>
 
 	public static void main( final String[] args ) throws ImgIOException
 	{
+		try
+		{
+			UIManager.setLookAndFeel( UIManager.getSystemLookAndFeelClassName() );
+		}
+		catch ( final ClassNotFoundException e )
+		{
+			e.printStackTrace();
+		}
+		catch ( final InstantiationException e )
+		{
+			e.printStackTrace();
+		}
+		catch ( final IllegalAccessException e )
+		{
+			e.printStackTrace();
+		}
+		catch ( final UnsupportedLookAndFeelException e )
+		{
+			e.printStackTrace();
+		}
+
 		ImageJ.main( args );
 
 		final File file = new File( "samples/SUM_FakeTracks.tif" );
-		final List< SCIFIOImgPlus< UnsignedByteType >> imgs = new ImgOpener().openImgs( file.toString(), new UnsignedByteType() );
-		final SCIFIOImgPlus< UnsignedByteType > img = imgs.get( 0 );
-		final double dx = img.averageScale( 0 );
-		final String unit = img.axis( 0 ).unit();
+		final ImagePlus imp = new ImagePlus( file.toString() );
 
-		ImageJFunctions.show( img );
-		new ColumnImgProfiler< UnsignedByteType >( img, dx, unit, img.getName() );
+		final Model model = new Model();
+		final SelectionModel selectionModel = new SelectionModel( model );
+		new ColumnImgProfiler( model, selectionModel, imp );
 
 	}
 
