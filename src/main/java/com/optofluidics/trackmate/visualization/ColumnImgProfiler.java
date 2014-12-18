@@ -1,15 +1,16 @@
 package com.optofluidics.trackmate.visualization;
 
-import fiji.plugin.trackmate.Model;
-import fiji.plugin.trackmate.SelectionModel;
 import ij.ImageJ;
 import ij.ImagePlus;
+import ij.gui.Overlay;
 import ij.process.ImageProcessor;
 import io.scif.img.ImgIOException;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
@@ -25,18 +26,26 @@ import javax.swing.event.ChangeListener;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
+import org.jfree.data.Range;
 import org.jfree.data.xy.DefaultXYDataset;
 import org.jfree.data.xy.XYDataset;
+
+import fiji.plugin.trackmate.Model;
+import fiji.plugin.trackmate.ModelChangeEvent;
+import fiji.plugin.trackmate.SelectionModel;
+import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
 
 /**
  * Returns the profile of 1D images.
  * 
  * @author Jean-Yves Tinevez
  */
-public class ColumnImgProfiler
+public class ColumnImgProfiler extends AbstractTrackMateModelView
 {
 
 	private static final String TITLE = "Image profiler";
@@ -61,8 +70,15 @@ public class ColumnImgProfiler
 
 	private final ImagePlus kymograph;
 
+	private KymographOverlay kymographOverlay;
+
+	private JFreeChart chart;
+
+	private int frame;
+
 	public ColumnImgProfiler( final Model model, final SelectionModel selectionModel, final ImagePlus imp )
 	{
+		super( model, selectionModel );
 		this.imp = imp;
 		if ( imp.getHeight() != 1 ) { throw new IllegalArgumentException( "ColumnImgProfiler only works for 1D image sequence. Dimensionality was " + imp.getWidth() + " x " + imp.getHeight() ); }
 
@@ -97,7 +113,7 @@ public class ColumnImgProfiler
 		this.ymax = tempmax;
 
 
-		init();
+		render();
 	}
 
 	public void map( final int t )
@@ -110,13 +126,19 @@ public class ColumnImgProfiler
 		}
 	}
 
-	private void init()
+	@Override
+	public void render()
 	{
+
 		/*
 		 * Kymograph
 		 */
 
 		kymograph.show();
+		kymograph.setOverlay( new Overlay() );
+		kymographOverlay = new KymographOverlay( model, kymograph, displaySettings );
+		kymograph.getOverlay().add( kymographOverlay );
+
 
 		/*
 		 * Dataset
@@ -129,7 +151,7 @@ public class ColumnImgProfiler
 		 * Chart
 		 */
 
-		final JFreeChart chart = createChart( dataset );
+		chart = createChart( dataset );
 		final ChartPanel chartPanel = new ChartPanel( chart );
 		chartPanel.setPreferredSize( new Dimension( 500, 270 ) );
 
@@ -137,19 +159,43 @@ public class ColumnImgProfiler
 		 * Slider
 		 */
 
-		final JSlider slider = new JSlider( 0, tmax );
+		final JSlider slider = new JSlider( 0, tmax - 1 );
 		final ChangeListener listener = new ChangeListener()
 		{
 			@Override
 			public void stateChanged( final ChangeEvent event )
 			{
 				final JSlider slider = ( JSlider ) event.getSource();
-				final int value = slider.getValue();
-				map( value );
-				chart.fireChartChanged();
+				final int frame = slider.getValue();
+				displayFrame( frame );
 			}
 		};
 		slider.addChangeListener( listener );
+
+		/*
+		 * MouseWheel listener
+		 */
+
+		final MouseWheelListener mlListener = new MouseWheelListener()
+		{
+			@Override
+			public void mouseWheelMoved( final MouseWheelEvent e )
+			{
+				final int rotation = e.getWheelRotation();
+				frame += rotation;
+				if ( frame < 0 )
+				{
+					frame = 0;
+				}
+				if ( frame >= tmax )
+				{
+					frame = tmax - 1;
+				}
+				slider.setValue( frame );
+				// Will trigger refresh.
+			}
+		};
+		kymograph.getWindow().addMouseWheelListener( mlListener );
 
 		/*
 		 * Main panel
@@ -166,6 +212,7 @@ public class ColumnImgProfiler
 		 */
 
 		final JFrame frame = new JFrame( TITLE );
+		frame.addMouseWheelListener( mlListener );
 		frame.addWindowListener( new WindowAdapter()
 		{
 			@Override
@@ -180,6 +227,12 @@ public class ColumnImgProfiler
 		frame.setVisible( true );
 
 		slider.setValue( 0 );
+	}
+	
+	public void displayFrame(final int frame)
+	{
+		this.frame = frame;
+		refresh();
 	}
 
 	private JFreeChart createChart( final XYDataset dataset )
@@ -200,13 +253,58 @@ public class ColumnImgProfiler
 		plot.setBackgroundPaint( Color.lightGray );
 		plot.setDomainGridlinePaint( Color.white );
 		plot.setRangeGridlinePaint( Color.white );
-		plot.getRangeAxis().setRange( ymin * 0.95, ymax * 1.05 );
+
+		final NumberAxis yAxis = ( NumberAxis ) plot.getRangeAxis();
+		final Range range = new Range( ymin * 0.95, ymax * 1.05 );
+		yAxis.setAutoRangeIncludesZero( false );
+		yAxis.setRange( range );
+		yAxis.setDefaultAutoRange( range );
 
 		final XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer();
 		renderer.setSeriesLinesVisible( 0, true );
 		renderer.setSeriesShapesVisible( 0, false );
 		plot.setRenderer( renderer );
 		return chart;
+	}
+
+	@Override
+	public void refresh()
+	{
+		map( frame );
+		if ( chart != null && kymographOverlay != null )
+		{
+			chart.fireChartChanged();
+			kymographOverlay.setFrame( frame );
+			kymograph.updateAndDraw();
+		}
+	}
+
+	@Override
+	public void clear()
+	{
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void centerViewOn( final Spot spot )
+	{
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public String getKey()
+	{
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void modelChanged( final ModelChangeEvent event )
+	{
+		// TODO Auto-generated method stub
+
 	}
 
 	/*
@@ -246,5 +344,4 @@ public class ColumnImgProfiler
 		new ColumnImgProfiler( model, selectionModel, imp );
 
 	}
-
 }
