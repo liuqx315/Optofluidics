@@ -11,8 +11,6 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.io.File;
 
 import javax.swing.JFrame;
@@ -41,6 +39,7 @@ import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.features.spot.SpotIntensityAnalyzerFactory;
 import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
+import fiji.plugin.trackmate.gui.GuiUtils;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
 import fiji.plugin.trackmate.visualization.PerTrackFeatureColorGenerator;
@@ -221,17 +220,9 @@ public class ColumnImgProfiler extends AbstractTrackMateModelView
 
 		final JFrame frame = new JFrame( TITLE );
 		frame.addMouseWheelListener( mlListener );
-		frame.addWindowListener( new WindowAdapter()
-		{
-			@Override
-			public void windowClosing( final WindowEvent e )
-			{
-				System.out.println( "Closing" );// DEBUG
-			};
-		} );
-
 		frame.setContentPane( panel );
 		frame.pack();
+		GuiUtils.positionWindow( frame, kymograph.getWindow() );
 		frame.setVisible( true );
 
 		slider.setValue( 0 );
@@ -271,6 +262,7 @@ public class ColumnImgProfiler extends AbstractTrackMateModelView
 		final XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer();
 		renderer.setSeriesLinesVisible( 0, true );
 		renderer.setSeriesShapesVisible( 0, false );
+		renderer.setSeriesPaint( 0, Color.BLACK );
 		plot.setRenderer( renderer );
 		return chart;
 	}

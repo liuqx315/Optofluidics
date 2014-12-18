@@ -153,9 +153,11 @@ public class ProfileOverlay implements Overlay
 
 			// The rest
 			final TrackColorGenerator colorGenerator = ( TrackColorGenerator ) displaySettings.get( TrackMateModelView.KEY_TRACK_COLORING );
-			g2d.setStroke( new BasicStroke( 2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND ) );
+			g2d.setStroke( new BasicStroke( 1.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND ) );
 			if ( trackDisplayMode == TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL || trackDisplayMode == TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL_QUICK )
+			{
 				g2d.setComposite( AlphaComposite.getInstance( AlphaComposite.SRC_OVER ) );
+			}
 
 			switch ( trackDisplayMode )
 			{
@@ -173,7 +175,9 @@ public class ProfileOverlay implements Overlay
 					for ( final DefaultWeightedEdge edge : track )
 					{
 						if ( edgeSelection.contains( edge ) )
+						{
 							continue;
+						}
 
 						source = model.getTrackModel().getEdgeSource( edge );
 						target = model.getTrackModel().getEdgeTarget( edge );
@@ -202,12 +206,16 @@ public class ProfileOverlay implements Overlay
 					for ( final DefaultWeightedEdge edge : track )
 					{
 						if ( edgeSelection.contains( edge ) )
+						{
 							continue;
+						}
 
 						source = model.getTrackModel().getEdgeSource( edge );
 						final int sourceFrame = source.getFeature( Spot.FRAME ).intValue();
 						if ( sourceFrame < minT || sourceFrame >= maxT )
+						{
 							continue;
+						}
 
 						target = model.getTrackModel().getEdgeTarget( edge );
 						g2d.setColor( colorGenerator.color( edge ) );
@@ -235,12 +243,16 @@ public class ProfileOverlay implements Overlay
 					for ( final DefaultWeightedEdge edge : track )
 					{
 						if ( edgeSelection.contains( edge ) )
+						{
 							continue;
+						}
 
 						source = model.getTrackModel().getEdgeSource( edge );
 						final int sourceFrame = source.getFeature( Spot.FRAME ).intValue();
 						if ( sourceFrame < minT || sourceFrame >= maxT )
+						{
 							continue;
+						}
 
 						transparency = ( float ) ( 1 - Math.abs( ( double ) sourceFrame - frame ) / trackDisplayDepth );
 						target = model.getTrackModel().getEdgeTarget( edge );
