@@ -32,8 +32,6 @@ public class KymographOverlay extends Roi
 
 	private final Model model;
 
-	private final ImagePlus imp;
-
 	private final Map< String, Object > displaySettings;
 
 	protected Collection< DefaultWeightedEdge > highlight = new HashSet< DefaultWeightedEdge >();
@@ -46,7 +44,6 @@ public class KymographOverlay extends Roi
 	{
 		super( 0, 0, imp );
 		this.model = model;
-		this.imp = imp;
 		this.displaySettings = displaySettings;
 		this.calibration = TMUtils.getSpatialCalibration( imp );
 	}

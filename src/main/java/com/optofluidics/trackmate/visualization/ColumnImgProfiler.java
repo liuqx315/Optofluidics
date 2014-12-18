@@ -39,10 +39,12 @@ import fiji.plugin.trackmate.ModelChangeEvent;
 import fiji.plugin.trackmate.SelectionModel;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.features.spot.SpotIntensityAnalyzerFactory;
 import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
 import fiji.plugin.trackmate.visualization.PerTrackFeatureColorGenerator;
+import fiji.plugin.trackmate.visualization.SpotColorGenerator;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
 /**
@@ -80,6 +82,8 @@ public class ColumnImgProfiler extends AbstractTrackMateModelView
 	private JFreeChart chart;
 
 	private int frame;
+
+	private ProfileOverlay profileOverlay;
 
 	public ColumnImgProfiler( final Model model, final SelectionModel selectionModel, final ImagePlus imp )
 	{
@@ -156,6 +160,8 @@ public class ColumnImgProfiler extends AbstractTrackMateModelView
 		chart = createChart( dataset );
 		final ChartPanel chartPanel = new ChartPanel( chart );
 		chartPanel.setPreferredSize( new Dimension( 500, 270 ) );
+		profileOverlay = new ProfileOverlay( model, displaySettings );
+		chartPanel.addOverlay( profileOverlay );
 
 		/*
 		 * Slider
@@ -275,9 +281,10 @@ public class ColumnImgProfiler extends AbstractTrackMateModelView
 		map( frame );
 		if ( chart != null && kymographOverlay != null )
 		{
-			chart.fireChartChanged();
 			kymographOverlay.setFrame( frame );
 			kymograph.updateAndDraw();
+			profileOverlay.setFrame( frame );
+			chart.fireChartChanged();
 		}
 	}
 
@@ -358,6 +365,11 @@ public class ColumnImgProfiler extends AbstractTrackMateModelView
 
 		final ColumnImgProfiler profiler = new ColumnImgProfiler( model, selectionModel, settings.imp );
 		profiler.setDisplaySettings( TrackMateModelView.KEY_TRACK_COLORING, new PerTrackFeatureColorGenerator( model, TrackIndexAnalyzer.TRACK_ID ) );
+		final SpotColorGenerator scg = new SpotColorGenerator( model );
+		scg.setFeature( SpotIntensityAnalyzerFactory.MAX_INTENSITY );
+		profiler.setDisplaySettings( TrackMateModelView.KEY_SPOT_COLORING, scg );
+		profiler.setDisplaySettings( TrackMateModelView.KEY_DISPLAY_SPOT_NAMES, true );
+
 		profiler.render();
 	}
 }
