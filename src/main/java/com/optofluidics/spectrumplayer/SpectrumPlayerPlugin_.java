@@ -1,5 +1,7 @@
 package com.optofluidics.spectrumplayer;
 
+import static com.optofluidics.Main.OPTOFLUIDICS_ICON;
+import static com.optofluidics.Main.OPTOFLUIDICS_LIB_VERSION;
 import fiji.tool.SliceListener;
 import fiji.tool.SliceObserver;
 import fiji.util.SplitString;
@@ -136,7 +138,7 @@ public class SpectrumPlayerPlugin_ implements PlugIn
 
 	private void showDialog()
 	{
-		final GenericDialogPlus dialog = new GenericDialogPlus( PLUGIN_TITLE );
+		final GenericDialogPlus dialog = new GenericDialogPlus( PLUGIN_TITLE + " " + OPTOFLUIDICS_LIB_VERSION );
 
 		if ( null == previousPath )
 		{
@@ -261,7 +263,8 @@ public class SpectrumPlayerPlugin_ implements PlugIn
 				final ChartPanel chartPanel = new ChartPanel( chart );
 				chartPanel.setPreferredSize( new Dimension( 500, 270 ) );
 
-				final JFrame frame = new JFrame( PLUGIN_TITLE );
+				final JFrame frame = new JFrame( PLUGIN_TITLE + " " + OPTOFLUIDICS_LIB_VERSION );
+				frame.setIconImage( OPTOFLUIDICS_ICON.getImage() );
 				frame.addWindowListener( new WindowAdapter()
 				{
 					@Override
@@ -286,8 +289,7 @@ public class SpectrumPlayerPlugin_ implements PlugIn
 	{
 
 		// create the chart...
-		final JFreeChart chart = ChartFactory.createXYLineChart( PLUGIN_TITLE, // chart
-				// title
+		final JFreeChart chart = ChartFactory.createXYLineChart( PLUGIN_TITLE + " " + OPTOFLUIDICS_LIB_VERSION,
 				XLABEL, // x axis label
 				YLABEL, // y axis label
 				dataset, // data
@@ -461,11 +463,11 @@ public class SpectrumPlayerPlugin_ implements PlugIn
 	public static void main( final String[] args )
 	{
 		ImageJ.main( args );
-		IJ.open( "/Users/JeanYves/Documents/Development/Optofluidics/test2_stack_100ms-rate_MMStack.ome.tif" );
+		IJ.open( "/Users/tinevez/Development/OptoFluidics/imLast/test02/test02/test02_MMStack.ome.tif" );
 		// new SpectrumPlayerPlugin_().run(
 		// "image=bat-cochlea-volume.tif spectrum=../24-12.csv" );
-		new SpectrumPlayerPlugin_().run( "image=test2_stack_100ms-rate_MMStack.ome.tif spectrum=../t6_76-5.csv" );
-		// new SpectrumPlayerPlugin_().run( "" );
+		new SpectrumPlayerPlugin_().run( "image=test02_MMStack.ome.tif spectrum=/Users/tinevez/Development/OptoFluidics/imLast/test02/test02.csv" );
+//		new SpectrumPlayerPlugin_().run( "" );
 	}
 
 }

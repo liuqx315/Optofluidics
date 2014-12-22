@@ -1,12 +1,12 @@
 package com.optofluidics.trackmate.visualization;
 
+import static com.optofluidics.Main.OPTOFLUIDICS_ICON;
+import static com.optofluidics.Main.OPTOFLUIDICS_LIB_VERSION;
 import ij.ImageJ;
 
 import javax.swing.ImageIcon;
 
 import org.scijava.plugin.Plugin;
-
-import com.optofluidics.Main;
 
 import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.SelectionModel;
@@ -28,6 +28,8 @@ public class ProfileViewFactory implements ViewFactory
 			+ "<p>"
 			+ "Launching this view with a source image data that is ont made"
 			+ "of single line frames will generate an error."
+			+ "<p>"
+			+ "Library version: " + OPTOFLUIDICS_LIB_VERSION + ""
 			+ "</html>";
 
 	private static final String NAME = "Profile viewer";
@@ -41,7 +43,7 @@ public class ProfileViewFactory implements ViewFactory
 	@Override
 	public ImageIcon getIcon()
 	{
-		return Main.OPTOFLUIDICS_ICON;
+		return OPTOFLUIDICS_ICON;
 	}
 
 	@Override

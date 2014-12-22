@@ -1,5 +1,7 @@
 package com.optofluidics.trackmate.action;
 
+import static com.optofluidics.Main.OPTOFLUIDICS_ICON;
+import static com.optofluidics.Main.OPTOFLUIDICS_LIB_VERSION;
 import ij.ImageJ;
 
 import java.awt.Frame;
@@ -12,7 +14,6 @@ import net.imglib2.util.Util;
 
 import org.scijava.plugin.Plugin;
 
-import com.optofluidics.Main;
 import com.optofluidics.trackmate.features.manual.EdgeSmoothedVelocityAnalyzer;
 import com.optofluidics.trackmate.features.manual.MotionTypeEdgeAnalyzer;
 import com.optofluidics.trackmate.features.manual.TrackPausingAnalyzer;
@@ -35,7 +36,11 @@ import fiji.plugin.trackmate.util.TMUtils;
 public class VelocityAnalysisAction extends AbstractTMAction
 {
 
-	private static final String INFO_TEXT = "<html>Perform the velocity macro analysis for tracks derived from Nanotweezers experiments.</html>";
+	private static final String INFO_TEXT = "<html>" +
+			"Perform the velocity macro analysis for tracks "
+			+ "derived from Nanotweezers experiments."
+			+ "<p>"
+			+ "Library version: " + OPTOFLUIDICS_LIB_VERSION + "</html>";
 
 	private static final String NAME = "Nanotweezers velocity macro analysis";
 
@@ -175,7 +180,7 @@ public class VelocityAnalysisAction extends AbstractTMAction
 		@Override
 		public ImageIcon getIcon()
 		{
-			return Main.OPTOFLUIDICS_ICON;
+			return OPTOFLUIDICS_ICON;
 		}
 
 		@Override
