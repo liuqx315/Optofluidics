@@ -2,7 +2,9 @@ package com.optofluidics.trackmate.visualization;
 
 import static com.optofluidics.Main.OPTOFLUIDICS_ICON;
 import static com.optofluidics.Main.OPTOFLUIDICS_LIB_VERSION;
+import ij.IJ;
 import ij.ImageJ;
+import ij.ImagePlus;
 
 import javax.swing.ImageIcon;
 
@@ -61,7 +63,17 @@ public class ProfileViewFactory implements ViewFactory
 	@Override
 	public ProfileView create( final Model model, final Settings settings, final SelectionModel selectionModel )
 	{
-		return new ProfileView( model, selectionModel, settings.imp );
+		final ImagePlus imp = settings.imp;
+		if ( imp.getHeight() != 1 )
+		{
+			IJ.error( NAME + " " + OPTOFLUIDICS_LIB_VERSION, "ColumnImgProfiler only works for 1D image sequence. Dimensionality was " + imp.getWidth() + " x " + imp.getHeight() );
+			return null;
+		}
+		else
+		{
+			return new ProfileView( model, selectionModel, imp );
+		}
+
 	}
 
 	public static void main( final String[] args )
