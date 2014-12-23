@@ -60,7 +60,7 @@ public class VelocityThresholdDialog extends JDialog
 		tfVelocityThreshold.setHorizontalAlignment( SwingConstants.CENTER );
 		tfVelocityThreshold.setFont( font );
 		tfVelocityThreshold.setColumns( 10 );
-		tfVelocityThreshold.setFormat( "%.2f" );
+		tfVelocityThreshold.setFormat( "%.4f" );
 
 		final JLabel label = new JLabel( velocityUnits );
 		label.setFont( font );
