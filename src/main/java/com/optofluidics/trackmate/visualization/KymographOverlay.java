@@ -72,7 +72,15 @@ public class KymographOverlay extends Roi
 		final int ys2 = ( int ) ( ( yp2 - ycorner ) * magnification ) - 1;
 
 		g2d.setColor( FRAME_BOX_COLOR );
-		g2d.drawRect( xs1, ys1, xs2 - xs1, ys2 - ys1 );
+		if ( ys2 <= ys1 )
+		{
+			g2d.drawLine( xs1, ys1, xs2, ys1 );
+		}
+		else
+		{
+			g2d.drawRect( xs1, ys1, xs2 - xs1, ys2 - ys1 );
+
+		}
 
 		/*
 		 * Tracks
