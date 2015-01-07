@@ -68,6 +68,7 @@ public class VelocityAnalysisExporter
 		list.add( TrackSpotIntensityAnalyzer.TRACK_STD_INTENSITY );
 
 		list.add( TrackPausingAnalyzer.MEAN_VELOCITY_NO_PAUSES );
+		list.add( TrackPausingAnalyzer.LINEAR_VELOCITY_NO_PAUSES );
 		list.add( TrackPausingAnalyzer.NUMBER_OF_PAUSES );
 		list.add( TrackPausingAnalyzer.PAUSE_MEAN_DURATION );
 
@@ -130,11 +131,11 @@ public class VelocityAnalysisExporter
 
 		// Hack to make the results table in sync with selection model.
 		if ( null != selectionModel )
-				{
+		{
 			final TextWindow window = ( TextWindow ) WindowManager.getWindow( TABLE_NAME );
 			final TextPanel textPanel = window.getTextPanel();
 			textPanel.addMouseListener( new MouseAdapter()
-					{
+			{
 				@Override
 				public void mouseClicked( final MouseEvent e )
 				{

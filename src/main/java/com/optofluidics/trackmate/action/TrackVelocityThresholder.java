@@ -297,15 +297,41 @@ public class TrackVelocityThresholder implements Algorithm
 			final double meanPauseDuration = totalPauseDuration / nPauses;
 			fm.putTrackFeature( id, TrackPausingAnalyzer.PAUSE_MEAN_DURATION, Double.valueOf( meanPauseDuration ) );
 
-			// Mean velocity without pauses.
+			// Mean velocity and linear velocity without pauses.
 			double totalVelocity = 0d;
 			int nVelocity = 0;
+			double totalDT = 0;
+			double totalDX = 0;
+			fm.putTrackFeature( id, TrackPausingAnalyzer.LINEAR_VELOCITY_NO_PAUSES, Double.valueOf( Double.NaN ) );
 			for ( final List< DefaultWeightedEdge > run2 : runs )
 			{
 				if ( run2.size() < 1 )
 				{
 					continue;
 				}
+
+				// Linear velocity
+				// run2 is ordered by time
+				final DefaultWeightedEdge firstEdge = run2.get( 0 );
+				Spot first = model.getTrackModel().getEdgeSource( firstEdge );
+				Spot other = model.getTrackModel().getEdgeTarget( firstEdge );
+				if ( other.diffTo( first, Spot.FRAME ) < 0 )
+				{
+					first = other;
+				}
+
+				final DefaultWeightedEdge lastEdge = run2.get( run2.size() - 1 );
+				Spot last = model.getTrackModel().getEdgeTarget( lastEdge );
+				other = model.getTrackModel().getEdgeSource( lastEdge );
+				if ( other.diffTo( last, Spot.FRAME ) > 0 )
+				{
+					last = other;
+				}
+				totalDX += Math.sqrt( last.squareDistanceTo( first ) );
+				totalDT += last.diffTo( first, Spot.POSITION_T );
+				fm.putTrackFeature( id, TrackPausingAnalyzer.LINEAR_VELOCITY_NO_PAUSES, Double.valueOf( totalDX / totalDT ) );
+
+				// Mean velocity
 				for ( final DefaultWeightedEdge edge : run2 )
 				{
 					final double v = fm.getEdgeFeature( edge, EdgeVelocityAnalyzer.VELOCITY );
@@ -314,6 +340,7 @@ public class TrackVelocityThresholder implements Algorithm
 
 					// Movement type = running
 					fm.putEdgeFeature( edge, MotionTypeEdgeAnalyzer.MOVEMENT_TYPE, MotionTypeEdgeAnalyzer.RUNNING );
+
 				}
 			}
 			final double meanVelocity = totalVelocity / nVelocity;

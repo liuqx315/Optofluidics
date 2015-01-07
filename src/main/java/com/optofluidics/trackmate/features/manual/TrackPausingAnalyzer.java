@@ -24,6 +24,8 @@ public class TrackPausingAnalyzer implements TrackAnalyzer
 
 	public static final String MEAN_VELOCITY_NO_PAUSES = "MEAN_VELOCITY_NO_PAUSES";
 
+	public static final String LINEAR_VELOCITY_NO_PAUSES = "LINEAR_VELOCITY_NO_PAUSES";
+
 	private static final List< String > FEATURES;
 
 	private static final Map< String, String > FEATURE_NAMES;
@@ -40,32 +42,38 @@ public class TrackPausingAnalyzer implements TrackAnalyzer
 
 	private static final String NAME = "Track pausing analyzer";
 
+
 	static
 	{
-		FEATURES = new ArrayList< String >( 3 );
+		FEATURES = new ArrayList< String >( 4 );
 		FEATURES.add( NUMBER_OF_PAUSES );
 		FEATURES.add( PAUSE_MEAN_DURATION );
 		FEATURES.add( MEAN_VELOCITY_NO_PAUSES );
+		FEATURES.add( LINEAR_VELOCITY_NO_PAUSES );
 
-		FEATURE_NAMES = new HashMap< String, String >( 3 );
+		FEATURE_NAMES = new HashMap< String, String >( 4 );
 		FEATURE_NAMES.put( NUMBER_OF_PAUSES, "Number of pauses" );
 		FEATURE_NAMES.put( PAUSE_MEAN_DURATION, "Mean pause duration" );
 		FEATURE_NAMES.put( MEAN_VELOCITY_NO_PAUSES, "Mean velocity w/o pauses" );
+		FEATURE_NAMES.put( LINEAR_VELOCITY_NO_PAUSES, "Linear velocity w/o pauses" );
 
-		FEATURE_SHORT_NAMES = new HashMap< String, String >( 3 );
+		FEATURE_SHORT_NAMES = new HashMap< String, String >( 4 );
 		FEATURE_SHORT_NAMES.put( NUMBER_OF_PAUSES, "N pauses" );
 		FEATURE_SHORT_NAMES.put( PAUSE_MEAN_DURATION, "Pause duration" );
 		FEATURE_SHORT_NAMES.put( MEAN_VELOCITY_NO_PAUSES, "Mean V. w/o pauses" );
+		FEATURE_SHORT_NAMES.put( LINEAR_VELOCITY_NO_PAUSES, "Linear V. w/o pauses" );
 
-		FEATURE_DIMENSIONS = new HashMap< String, Dimension >( 3 );
+		FEATURE_DIMENSIONS = new HashMap< String, Dimension >( 4 );
 		FEATURE_DIMENSIONS.put( NUMBER_OF_PAUSES, Dimension.NONE );
 		FEATURE_DIMENSIONS.put( PAUSE_MEAN_DURATION, Dimension.TIME );
 		FEATURE_DIMENSIONS.put( MEAN_VELOCITY_NO_PAUSES, Dimension.VELOCITY );
+		FEATURE_DIMENSIONS.put( LINEAR_VELOCITY_NO_PAUSES, Dimension.VELOCITY );
 
-		IS_INT = new HashMap< String, Boolean >( 3 );
+		IS_INT = new HashMap< String, Boolean >( 4 );
 		IS_INT.put( NUMBER_OF_PAUSES, Boolean.TRUE );
 		IS_INT.put( PAUSE_MEAN_DURATION, Boolean.FALSE );
 		IS_INT.put( MEAN_VELOCITY_NO_PAUSES, Boolean.FALSE );
+		IS_INT.put( LINEAR_VELOCITY_NO_PAUSES, Boolean.FALSE );
 	}
 
 	private long processingTime;
