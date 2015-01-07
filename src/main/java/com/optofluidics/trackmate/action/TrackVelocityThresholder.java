@@ -255,11 +255,11 @@ public class TrackVelocityThresholder implements Algorithm
 			}
 			else
 			{
-				if ( null != gap && !gaps.contains( gap ) )
+				if ( null != gap && !gaps.contains( gap ) && !gap.isEmpty() )
 				{
 					gaps.add( gap );
 				}
-				if ( null != run && !runs.contains( run ) )
+				if ( null != run && !runs.contains( run ) && !run.isEmpty() )
 				{
 					runs.add( run );
 				}
