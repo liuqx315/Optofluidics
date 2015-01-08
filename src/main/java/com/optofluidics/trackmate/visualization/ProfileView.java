@@ -3,12 +3,15 @@ package com.optofluidics.trackmate.visualization;
 import ij.ImageJ;
 import ij.ImagePlus;
 import ij.gui.Overlay;
+import ij.gui.Toolbar;
 import ij.process.ImageProcessor;
 import io.scif.img.ImgIOException;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.io.File;
@@ -48,6 +51,8 @@ import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
 import fiji.plugin.trackmate.visualization.PerTrackFeatureColorGenerator;
 import fiji.plugin.trackmate.visualization.SpotColorGenerator;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
+import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayerFactory;
+import fiji.plugin.trackmate.visualization.hyperstack.SpotEditTool;
 import fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFactory;
 
 /**
@@ -231,6 +236,35 @@ public class ProfileView extends AbstractTrackMateModelView
 		kymograph.getWindow().addMouseWheelListener( mlListener );
 
 		/*
+		 * Mouse press listener
+		 */
+
+		final String toolName = SpotEditTool.getInstance().getToolName();
+		final MouseAdapter mouseAdapter = new MouseAdapter()
+		{
+			@Override
+			public void mousePressed( final MouseEvent event )
+			{
+				if ( Toolbar.getToolName().equals( toolName ) )
+				{
+					displayFrameFrom( event );
+				}
+			};
+
+			@Override
+			public void mouseDragged( final MouseEvent event )
+			{
+				if ( Toolbar.getToolName().equals( toolName ) )
+				{
+					displayFrameFrom( event );
+				}
+			};
+		};
+
+		kymograph.getCanvas().addMouseListener( mouseAdapter );
+		kymograph.getCanvas().addMouseMotionListener( mouseAdapter );
+
+		/*
 		 * Main panel
 		 */
 
@@ -259,6 +293,20 @@ public class ProfileView extends AbstractTrackMateModelView
 	{
 		this.frame = frame;
 		refresh();
+	}
+
+	private void displayFrameFrom( final MouseEvent event )
+	{
+		int frame;
+		if ( orientation == ProfileViewOrientation.HORIZONTAL )
+		{
+			frame = kymograph.getCanvas().offScreenX( event.getX() );
+		}
+		else
+		{
+			frame = kymograph.getCanvas().offScreenY( event.getY() );
+		}
+		displayFrame( frame );
 	}
 
 	private JFreeChart createChart( final XYDataset dataset )
@@ -391,7 +439,7 @@ public class ProfileView extends AbstractTrackMateModelView
 		reader.readSettings( settings, null, null, null, null, null );
 		final SelectionModel selectionModel = new SelectionModel( model );
 
-		final ProfileView profiler = new ProfileView( model, selectionModel, settings.imp, ProfileViewOrientation.HORIZONTAL );
+		final ProfileView profiler = new ProfileView( model, selectionModel, settings.imp, ProfileViewOrientation.VERTICAL );
 		profiler.setDisplaySettings( TrackMateModelView.KEY_TRACK_COLORING, new PerTrackFeatureColorGenerator( model, TrackIndexAnalyzer.TRACK_ID ) );
 		final SpotColorGenerator scg = new SpotColorGenerator( model );
 		scg.setFeature( SpotIntensityAnalyzerFactory.MAX_INTENSITY );
@@ -402,5 +450,6 @@ public class ProfileView extends AbstractTrackMateModelView
 		profiler.render();
 
 		new TrackSchemeFactory().create( model, settings, selectionModel ).render();
+		new HyperStackDisplayerFactory().create( model, settings, selectionModel ).render();
 	}
 }
