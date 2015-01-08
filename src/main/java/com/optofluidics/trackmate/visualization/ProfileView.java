@@ -36,6 +36,7 @@ import com.optofluidics.Main;
 
 import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.ModelChangeEvent;
+import fiji.plugin.trackmate.SelectionChangeEvent;
 import fiji.plugin.trackmate.SelectionModel;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
@@ -47,6 +48,7 @@ import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
 import fiji.plugin.trackmate.visualization.PerTrackFeatureColorGenerator;
 import fiji.plugin.trackmate.visualization.SpotColorGenerator;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
+import fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFactory;
 
 /**
  * A TrackMate model view that specializes for image sequences with individual
@@ -313,6 +315,18 @@ public class ProfileView extends AbstractTrackMateModelView
 		refresh();
 	}
 
+	@Override
+	public void selectionChanged( final SelectionChangeEvent event )
+	{
+		// Highlight selection
+		kymographOverlay.setHighlight( selectionModel.getEdgeSelection() );
+		profileOverlay.setSpotSelection( selectionModel.getSpotSelection() );
+		profileOverlay.setHighlight( selectionModel.getEdgeSelection() );
+		// Center on last spot
+		super.selectionChanged( event );
+		refresh();
+	}
+
 	/*
 	 * MAIN method
 	 */
@@ -369,5 +383,7 @@ public class ProfileView extends AbstractTrackMateModelView
 		profiler.setDisplaySettings( TrackMateModelView.KEY_TRACK_DISPLAY_MODE, TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL_BACKWARD );
 
 		profiler.render();
+
+		new TrackSchemeFactory().create( model, settings, selectionModel ).render();
 	}
 }
