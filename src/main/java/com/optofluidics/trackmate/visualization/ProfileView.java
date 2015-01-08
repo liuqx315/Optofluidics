@@ -59,6 +59,11 @@ import fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFactory;
 public class ProfileView extends AbstractTrackMateModelView
 {
 
+	public static enum ProfileViewOrientation
+	{
+		VERTICAL, HORIZONTAL;
+	}
+
 	private static final String TITLE = "Profile view";
 
 	static final String KEY = "PROFILEVIEW";
@@ -93,13 +98,30 @@ public class ProfileView extends AbstractTrackMateModelView
 
 	private MouseWheelListener mlListener;
 
+	private final ProfileViewOrientation orientation;
+
 	public ProfileView( final Model model, final SelectionModel selectionModel, final ImagePlus imp )
+	{
+		this( model, selectionModel, imp, ProfileViewOrientation.VERTICAL );
+	}
+
+	public ProfileView( final Model model, final SelectionModel selectionModel, final ImagePlus imp, final ProfileViewOrientation orientation )
 	{
 		super( model, selectionModel );
 		this.imp = imp;
+		this.orientation = orientation;
 		if ( imp.getHeight() != 1 ) { throw new IllegalArgumentException( "ColumnImgProfiler only works for 1D image sequence. Dimensionality was " + imp.getWidth() + " x " + imp.getHeight() ); }
 
-		this.kymograph = KymographGenerator.fromLineImage( imp );
+		switch ( orientation )
+		{
+		case HORIZONTAL:
+			this.kymograph = KymographGenerator.fromLineImageHorizontal( imp );
+			break;
+
+		default:
+			this.kymograph = KymographGenerator.fromLineImageVertical( imp );
+			break;
+		}
 		this.unit = imp.getCalibration().getUnits();
 		this.title = imp.getShortTitle();
 		this.Y = new double[ imp.getWidth() ];
@@ -135,7 +157,7 @@ public class ProfileView extends AbstractTrackMateModelView
 
 		kymograph.show();
 		kymograph.setOverlay( new Overlay() );
-		kymographOverlay = new KymographOverlay( model, kymograph, displaySettings, imp.getCalibration().pixelWidth );
+		kymographOverlay = new KymographOverlay( model, kymograph, displaySettings, imp.getCalibration().pixelWidth, orientation );
 		kymograph.getOverlay().add( kymographOverlay );
 
 		/*
@@ -369,7 +391,7 @@ public class ProfileView extends AbstractTrackMateModelView
 		reader.readSettings( settings, null, null, null, null, null );
 		final SelectionModel selectionModel = new SelectionModel( model );
 
-		final ProfileView profiler = new ProfileView( model, selectionModel, settings.imp );
+		final ProfileView profiler = new ProfileView( model, selectionModel, settings.imp, ProfileViewOrientation.HORIZONTAL );
 		profiler.setDisplaySettings( TrackMateModelView.KEY_TRACK_COLORING, new PerTrackFeatureColorGenerator( model, TrackIndexAnalyzer.TRACK_ID ) );
 		final SpotColorGenerator scg = new SpotColorGenerator( model );
 		scg.setFeature( SpotIntensityAnalyzerFactory.MAX_INTENSITY );

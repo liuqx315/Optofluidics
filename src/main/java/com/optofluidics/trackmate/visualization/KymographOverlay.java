@@ -21,6 +21,8 @@ import java.util.Set;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
 
+import com.optofluidics.trackmate.visualization.ProfileView.ProfileViewOrientation;
+
 public class KymographOverlay extends Roi
 {
 	private static final long serialVersionUID = 1L;
@@ -39,12 +41,15 @@ public class KymographOverlay extends Roi
 
 	private final double dx;
 
-	public KymographOverlay( final Model model, final ImagePlus imp, final Map< String, Object > displaySettings, final double dx )
+	private final ProfileViewOrientation orientation;
+
+	public KymographOverlay( final Model model, final ImagePlus imp, final Map< String, Object > displaySettings, final double dx, final ProfileViewOrientation orientation )
 	{
 		super( 0, 0, imp );
 		this.model = model;
 		this.displaySettings = displaySettings;
 		this.dx = dx;
+		this.orientation = orientation;
 	}
 
 	@Override
@@ -61,10 +66,26 @@ public class KymographOverlay extends Roi
 		 * Rectangle specifying current frame
 		 */
 
-		final int xp1 = 0;
-		final int xp2 = imp.getWidth();
-		final int yp1 = frame;
-		final int yp2 = frame + 1;
+		final int xp1;
+		final int xp2;
+		final int yp1;
+		final int yp2;
+		switch ( orientation )
+		{
+		case HORIZONTAL:
+			yp1 = 0;
+			yp2 = imp.getHeight();
+			xp1 = frame;
+			xp2 = frame + 1;
+			break;
+
+		default:
+			xp1 = 0;
+			xp2 = imp.getWidth();
+			yp1 = frame;
+			yp2 = frame + 1;
+			break;
+		}
 
 		final int xs1 = ( int ) ( ( xp1 - xcorner ) * magnification );
 		final int ys1 = ( int ) ( ( yp1 - ycorner ) * magnification );
@@ -81,6 +102,7 @@ public class KymographOverlay extends Roi
 			g2d.drawRect( xs1, ys1, xs2 - xs1, ys2 - ys1 );
 
 		}
+
 
 		/*
 		 * Tracks
