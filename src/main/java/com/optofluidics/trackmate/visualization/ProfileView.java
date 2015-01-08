@@ -111,23 +111,8 @@ public class ProfileView extends AbstractTrackMateModelView
 
 		this.tmax = imp.getStackSize();
 		this.width = imp.getWidth();
-		double tempmin = Double.POSITIVE_INFINITY;
-		double tempmax = Double.NEGATIVE_INFINITY;
-		for ( int i = 0; i < tmax; i++ )
-		{
-			final double max = imp.getStack().getProcessor( i + 1 ).getMax();
-			if ( max > tempmax )
-			{
-				tempmax = max;
-			}
-			final double min = imp.getStack().getProcessor( i + 1 ).getMin();
-			if ( min < tempmin )
-			{
-				tempmin = min;
-			}
-		}
-		this.ymin = tempmin;
-		this.ymax = tempmax;
+		this.ymin = kymograph.getProcessor().getStatistics().min;
+		this.ymax = kymograph.getProcessor().getStatistics().max;
 	}
 
 	public void map( final int t )
@@ -165,7 +150,18 @@ public class ProfileView extends AbstractTrackMateModelView
 		 */
 
 		chart = createChart( dataset );
-		final ChartPanel chartPanel = new ChartPanel( chart );
+		final ChartPanel chartPanel = new ChartPanel( chart ) {
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void restoreAutoBounds()
+			{
+				super.restoreAutoDomainBounds();
+				final XYPlot plot = this.getChart().getXYPlot();
+				plot.getRangeAxis().setAutoRange( false );
+				plot.getRangeAxis().setRange( ymin * 0.95, ymax * 1.05 );
+			}
+		};
 		chartPanel.setPreferredSize( new Dimension( 500, 270 ) );
 		profileOverlay = new ProfileOverlay( model, displaySettings );
 		chartPanel.addOverlay( profileOverlay );
@@ -245,25 +241,10 @@ public class ProfileView extends AbstractTrackMateModelView
 
 	private JFreeChart createChart( final XYDataset dataset )
 	{
+		final NumberAxis xAxis = new NumberAxis( unit );
+		xAxis.setAutoRangeIncludesZero( false );
 
-		// create the chart...
-		final JFreeChart chart = ChartFactory.createXYLineChart( title, unit, // x
-				// axis
-				// label
-				"#", // y axis label
-				dataset, // data
-				PlotOrientation.VERTICAL, false, // include legend
-				false, // tooltips
-				false // urls
-				);
-
-		// get a reference to the plot for further customisation...
-		final XYPlot plot = chart.getXYPlot();
-		plot.setBackgroundPaint( Color.lightGray );
-		plot.setDomainGridlinePaint( Color.white );
-		plot.setRangeGridlinePaint( Color.white );
-
-		final NumberAxis yAxis = ( NumberAxis ) plot.getRangeAxis();
+		final NumberAxis yAxis = new NumberAxis( "#" );
 		final Range range = new Range( ymin * 0.95, ymax * 1.05 );
 		yAxis.setAutoRangeIncludesZero( false );
 		yAxis.setRange( range );
@@ -273,7 +254,21 @@ public class ProfileView extends AbstractTrackMateModelView
 		renderer.setSeriesLinesVisible( 0, true );
 		renderer.setSeriesShapesVisible( 0, false );
 		renderer.setSeriesPaint( 0, Color.BLACK );
-		plot.setRenderer( renderer );
+
+		final XYPlot plot = new XYPlot( dataset, xAxis, yAxis, renderer );
+		plot.setOrientation( PlotOrientation.VERTICAL );
+
+		// Further customization
+		plot.setBackgroundPaint( Color.lightGray );
+		plot.setDomainGridlinePaint( Color.white );
+		plot.setRangeGridlinePaint( Color.white );
+
+		// Create chart
+		final JFreeChart chart = new JFreeChart( title, JFreeChart.DEFAULT_TITLE_FONT, plot, false );
+
+		// Theme
+		ChartFactory.getChartTheme().apply( chart );
+
 		return chart;
 	}
 
