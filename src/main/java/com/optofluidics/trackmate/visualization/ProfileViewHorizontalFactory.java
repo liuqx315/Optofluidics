@@ -1,14 +1,13 @@
 package com.optofluidics.trackmate.visualization;
 
-import static com.optofluidics.Main.OPTOFLUIDICS_ICON;
 import static com.optofluidics.Main.OPTOFLUIDICS_LIB_VERSION;
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
 
-import javax.swing.ImageIcon;
-
 import org.scijava.plugin.Plugin;
+
+import com.optofluidics.trackmate.visualization.ProfileView.ProfileViewOrientation;
 
 import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.SelectionModel;
@@ -17,13 +16,13 @@ import fiji.plugin.trackmate.TrackMatePlugIn_;
 import fiji.plugin.trackmate.visualization.ViewFactory;
 
 @Plugin( type = ViewFactory.class )
-public class ProfileViewFactory implements ViewFactory
+public class ProfileViewHorizontalFactory extends ProfileViewFactory
 {
 
 	private static final String INFO_TEXT = "<html>"
 			+ "This is a specialized view for line images: Image sequences "
 			+ "with all frames made of just 1 line. The frame raw data is displayed "
-			+ "as an intensity profile, and a <u>vertical</u> kymograph is displayed next. Spots and "
+			+ "as an intensity profile, and a <u>horizontal</u> kymograph is displayed next. Spots and "
 			+ "track are shown on the profile window, and tracks on the kymograph."
 			+ "<p>"
 			+ "The view does not allow interacting with the data. "
@@ -34,24 +33,19 @@ public class ProfileViewFactory implements ViewFactory
 			+ "Library version: " + OPTOFLUIDICS_LIB_VERSION + ""
 			+ "</html>";
 
-	private static final String NAME = "Profile viewer - vertical";
+	private static final String NAME = "Profile viewer - horizontal";
+
+	private static final String KEY = ProfileView.KEY + "_HORIZONTAL";
 
 	@Override
 	public String getInfoText()
 	{
 		return INFO_TEXT;
 	}
-
-	@Override
-	public ImageIcon getIcon()
-	{
-		return OPTOFLUIDICS_ICON;
-	}
-
 	@Override
 	public String getKey()
 	{
-		return ProfileView.KEY;
+		return KEY;
 	}
 
 	@Override
@@ -71,7 +65,7 @@ public class ProfileViewFactory implements ViewFactory
 		}
 		else
 		{
-			return new ProfileView( model, selectionModel, imp );
+			return new ProfileView( model, selectionModel, imp, ProfileViewOrientation.HORIZONTAL );
 		}
 
 	}

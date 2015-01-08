@@ -100,7 +100,6 @@ public class KymographOverlay extends Roi
 		else
 		{
 			g2d.drawRect( xs1, ys1, xs2 - xs1, ys2 - ys1 );
-
 		}
 
 
@@ -292,7 +291,14 @@ public class KymographOverlay extends Roi
 		if ( x0 == x1 && y0 == y1 ) { return; }
 
 		g2d.setComposite( AlphaComposite.getInstance( AlphaComposite.SRC_OVER, transparency ) );
-		g2d.drawLine( x0, y0, x1, y1 );
+		if ( orientation == ProfileViewOrientation.VERTICAL )
+		{
+			g2d.drawLine( x0, y0, x1, y1 );
+		}
+		else
+		{
+			g2d.drawLine( y0, x0, y1, x1 );
+		}
 	}
 
 	private void drawEdge( final Graphics2D g2d, final Spot source, final Spot target, final int xcorner, final int ycorner, final double magnification )
@@ -318,7 +324,14 @@ public class KymographOverlay extends Roi
 
 		if ( x0 == x1 && y0 == y1 ) { return; }
 
-		g2d.drawLine( x0, y0, x1, y1 );
+		if ( orientation == ProfileViewOrientation.VERTICAL )
+		{
+			g2d.drawLine( x0, y0, x1, y1 );
+		}
+		else
+		{
+			g2d.drawLine( y0, x0, y1, x1 );
+		}
 
 	}
 
