@@ -374,7 +374,14 @@ public class ProfileView extends AbstractTrackMateModelView
 	@Override
 	public String getKey()
 	{
-		return KEY;
+		switch ( orientation )
+		{
+		case HORIZONTAL:
+			return KEY + "_HORIZONTAL";
+
+		default:
+			return KEY;
+		}
 	}
 
 	@Override
