@@ -273,10 +273,24 @@ public class KymographOverlay extends Roi
 		final double x0i = source.getFeature( Spot.POSITION_X );
 		final double x1i = target.getFeature( Spot.POSITION_X );
 		// In pixel units
-		final double x0p = x0i / dx + 0.5;
-		final double y0p = source.getFeature( Spot.FRAME ).intValue() + 0.5;
-		final double x1p = x1i / dx + 0.5;
-		final double y1p = target.getFeature( Spot.FRAME ).intValue() + 0.5;
+		final double x0p;
+		final double y0p;
+		final double x1p;
+		final double y1p;
+		if ( orientation == ProfileViewOrientation.VERTICAL )
+		{
+			x0p = x0i / dx + 0.5;
+			y0p = source.getFeature( Spot.FRAME ).intValue() + 0.5;
+			x1p = x1i / dx + 0.5;
+			y1p = target.getFeature( Spot.FRAME ).intValue() + 0.5;
+		}
+		else
+		{
+			y0p = x0i / dx + 0.5;
+			x0p = source.getFeature( Spot.FRAME ).intValue() + 0.5;
+			y1p = x1i / dx + 0.5;
+			x1p = target.getFeature( Spot.FRAME ).intValue() + 0.5;
+		}
 		// Scale to image zoom
 		final double x0s = ( x0p - xcorner ) * magnification;
 		final double y0s = ( y0p - ycorner ) * magnification;
@@ -289,16 +303,8 @@ public class KymographOverlay extends Roi
 		final int y1 = ( int ) Math.round( y1s );
 
 		if ( x0 == x1 && y0 == y1 ) { return; }
-
 		g2d.setComposite( AlphaComposite.getInstance( AlphaComposite.SRC_OVER, transparency ) );
-		if ( orientation == ProfileViewOrientation.VERTICAL )
-		{
-			g2d.drawLine( x0, y0, x1, y1 );
-		}
-		else
-		{
-			g2d.drawLine( y0, x0, y1, x1 );
-		}
+		g2d.drawLine( x0, y0, x1, y1 );
 	}
 
 	private void drawEdge( final Graphics2D g2d, final Spot source, final Spot target, final int xcorner, final int ycorner, final double magnification )
@@ -307,10 +313,24 @@ public class KymographOverlay extends Roi
 		final double x0i = source.getFeature( Spot.POSITION_X );
 		final double x1i = target.getFeature( Spot.POSITION_X );
 		// In pixel units
-		final double x0p = x0i / dx + 0.5;
-		final double y0p = source.getFeature( Spot.FRAME ).intValue() + 0.5;
-		final double x1p = x1i / dx + 0.5;
-		final double y1p = target.getFeature( Spot.FRAME ).intValue() + 0.5;
+		final double x0p;
+		final double y0p;
+		final double x1p;
+		final double y1p;
+		if ( orientation == ProfileViewOrientation.VERTICAL )
+		{
+			x0p = x0i / dx + 0.5;
+			y0p = source.getFeature( Spot.FRAME ).intValue() + 0.5;
+			x1p = x1i / dx + 0.5;
+			y1p = target.getFeature( Spot.FRAME ).intValue() + 0.5;
+		}
+		else
+		{
+			y0p = x0i / dx + 0.5;
+			x0p = source.getFeature( Spot.FRAME ).intValue() + 0.5;
+			y1p = x1i / dx + 0.5;
+			x1p = target.getFeature( Spot.FRAME ).intValue() + 0.5;
+		}
 		// Scale to image zoom
 		final double x0s = ( x0p - xcorner ) * magnification;
 		final double y0s = ( y0p - ycorner ) * magnification;
@@ -323,16 +343,7 @@ public class KymographOverlay extends Roi
 		final int y1 = ( int ) Math.round( y1s );
 
 		if ( x0 == x1 && y0 == y1 ) { return; }
-
-		if ( orientation == ProfileViewOrientation.VERTICAL )
-		{
-			g2d.drawLine( x0, y0, x1, y1 );
-		}
-		else
-		{
-			g2d.drawLine( y0, x0, y1, x1 );
-		}
-
+		g2d.drawLine( x0, y0, x1, y1 );
 	}
 
 	public void setFrame( final int frame )
