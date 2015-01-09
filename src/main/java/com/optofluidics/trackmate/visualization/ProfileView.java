@@ -101,9 +101,9 @@ public class ProfileView extends AbstractTrackMateModelView
 
 	private ProfileOverlay profileOverlay;
 
-	private MouseWheelListener mlListener;
-
 	private final ProfileViewOrientation orientation;
+
+	private JSlider slider;
 
 	public ProfileView( final Model model, final SelectionModel selectionModel, final ImagePlus imp )
 	{
@@ -197,15 +197,15 @@ public class ProfileView extends AbstractTrackMateModelView
 		 * Slider
 		 */
 
-		final JSlider slider = new JSlider( 0, tmax - 1 );
+		slider = new JSlider( 0, tmax - 1 );
 		final ChangeListener listener = new ChangeListener()
 		{
 			@Override
 			public void stateChanged( final ChangeEvent event )
 			{
 				final JSlider slider = ( JSlider ) event.getSource();
-				final int frame = slider.getValue();
-				displayFrame( frame );
+				frame = slider.getValue();
+				refresh();
 			}
 		};
 		slider.addChangeListener( listener );
@@ -214,7 +214,7 @@ public class ProfileView extends AbstractTrackMateModelView
 		 * MouseWheel listener
 		 */
 
-		mlListener = new MouseWheelListener()
+		final MouseWheelListener mlListener = new MouseWheelListener()
 		{
 			@Override
 			public void mouseWheelMoved( final MouseWheelEvent e )
@@ -247,7 +247,16 @@ public class ProfileView extends AbstractTrackMateModelView
 			{
 				if ( Toolbar.getToolName().equals( toolName ) )
 				{
-					displayFrameFrom( event );
+					int frame;
+					if ( orientation == ProfileViewOrientation.HORIZONTAL )
+					{
+						frame = kymograph.getCanvas().offScreenX( event.getX() );
+					}
+					else
+					{
+						frame = kymograph.getCanvas().offScreenY( event.getY() );
+					}
+					slider.setValue( frame );
 				}
 			};
 
@@ -256,7 +265,16 @@ public class ProfileView extends AbstractTrackMateModelView
 			{
 				if ( Toolbar.getToolName().equals( toolName ) )
 				{
-					displayFrameFrom( event );
+					int frame;
+					if ( orientation == ProfileViewOrientation.HORIZONTAL )
+					{
+						frame = kymograph.getCanvas().offScreenX( event.getX() );
+					}
+					else
+					{
+						frame = kymograph.getCanvas().offScreenY( event.getY() );
+					}
+					slider.setValue( frame );
 				}
 			};
 		};
@@ -287,26 +305,6 @@ public class ProfileView extends AbstractTrackMateModelView
 		frame.setVisible( true );
 
 		slider.setValue( 0 );
-	}
-
-	public void displayFrame( final int frame )
-	{
-		this.frame = frame;
-		refresh();
-	}
-
-	private void displayFrameFrom( final MouseEvent event )
-	{
-		int frame;
-		if ( orientation == ProfileViewOrientation.HORIZONTAL )
-		{
-			frame = kymograph.getCanvas().offScreenX( event.getX() );
-		}
-		else
-		{
-			frame = kymograph.getCanvas().offScreenY( event.getY() );
-		}
-		displayFrame( frame );
 	}
 
 	private JFreeChart createChart( final XYDataset dataset )
@@ -365,7 +363,12 @@ public class ProfileView extends AbstractTrackMateModelView
 	public void centerViewOn( final Spot spot )
 	{
 		final int frame = spot.getFeature( Spot.FRAME ).intValue();
-		displayFrame( frame );
+		slider.setValue( frame );
+	}
+
+	public void displayFrame( final int frame )
+	{
+		slider.setValue( frame );
 	}
 
 	@Override
@@ -439,7 +442,7 @@ public class ProfileView extends AbstractTrackMateModelView
 		reader.readSettings( settings, null, null, null, null, null );
 		final SelectionModel selectionModel = new SelectionModel( model );
 
-		final ProfileView profiler = new ProfileView( model, selectionModel, settings.imp, ProfileViewOrientation.VERTICAL );
+		final ProfileView profiler = new ProfileView( model, selectionModel, settings.imp, ProfileViewOrientation.HORIZONTAL );
 		profiler.setDisplaySettings( TrackMateModelView.KEY_TRACK_COLORING, new PerTrackFeatureColorGenerator( model, TrackIndexAnalyzer.TRACK_ID ) );
 		final SpotColorGenerator scg = new SpotColorGenerator( model );
 		scg.setFeature( SpotIntensityAnalyzerFactory.MAX_INTENSITY );
