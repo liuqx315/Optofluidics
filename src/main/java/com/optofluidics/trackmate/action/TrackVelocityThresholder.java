@@ -302,6 +302,7 @@ public class TrackVelocityThresholder implements Algorithm
 			int nVelocity = 0;
 			double totalDT = 0;
 			double totalDX = 0;
+			int nSpotsInRuns = 0;
 			fm.putTrackFeature( id, TrackPausingAnalyzer.LINEAR_VELOCITY_NO_PAUSES, Double.valueOf( Double.NaN ) );
 			for ( final List< DefaultWeightedEdge > run2 : runs )
 			{
@@ -331,7 +332,7 @@ public class TrackVelocityThresholder implements Algorithm
 				totalDT += last.diffTo( first, Spot.POSITION_T );
 				fm.putTrackFeature( id, TrackPausingAnalyzer.LINEAR_VELOCITY_NO_PAUSES, Double.valueOf( totalDX / totalDT ) );
 
-				// Mean velocity
+				// Mean velocity & N spots in runs
 				for ( final DefaultWeightedEdge edge : run2 )
 				{
 					final double v = fm.getEdgeFeature( edge, EdgeVelocityAnalyzer.VELOCITY );
@@ -341,10 +342,15 @@ public class TrackVelocityThresholder implements Algorithm
 					// Movement type = running
 					fm.putEdgeFeature( edge, MotionTypeEdgeAnalyzer.MOVEMENT_TYPE, MotionTypeEdgeAnalyzer.RUNNING );
 
+					// Count edges.
+					nSpotsInRuns++;
 				}
+				// Then add one
+				nSpotsInRuns++;
 			}
 			final double meanVelocity = totalVelocity / nVelocity;
 			fm.putTrackFeature( id, TrackPausingAnalyzer.MEAN_VELOCITY_NO_PAUSES, Double.valueOf( meanVelocity ) );
+			fm.putTrackFeature( id, TrackPausingAnalyzer.N_SPOTS_IN_RUNS, Double.valueOf( nSpotsInRuns ) );
 
 			/*
 			 * Log

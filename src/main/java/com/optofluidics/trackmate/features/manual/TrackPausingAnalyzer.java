@@ -26,6 +26,8 @@ public class TrackPausingAnalyzer implements TrackAnalyzer
 
 	public static final String LINEAR_VELOCITY_NO_PAUSES = "LINEAR_VELOCITY_NO_PAUSES";
 
+	public static final String N_SPOTS_IN_RUNS = "N_SPOTS_IN_RUNS";
+
 	private static final List< String > FEATURES;
 
 	private static final Map< String, String > FEATURE_NAMES;
@@ -45,35 +47,40 @@ public class TrackPausingAnalyzer implements TrackAnalyzer
 
 	static
 	{
-		FEATURES = new ArrayList< String >( 4 );
+		FEATURES = new ArrayList< String >( 5 );
 		FEATURES.add( NUMBER_OF_PAUSES );
 		FEATURES.add( PAUSE_MEAN_DURATION );
 		FEATURES.add( MEAN_VELOCITY_NO_PAUSES );
 		FEATURES.add( LINEAR_VELOCITY_NO_PAUSES );
+		FEATURES.add( N_SPOTS_IN_RUNS );
 
 		FEATURE_NAMES = new HashMap< String, String >( 4 );
 		FEATURE_NAMES.put( NUMBER_OF_PAUSES, "Number of pauses" );
 		FEATURE_NAMES.put( PAUSE_MEAN_DURATION, "Mean pause duration" );
 		FEATURE_NAMES.put( MEAN_VELOCITY_NO_PAUSES, "Mean velocity w/o pauses" );
 		FEATURE_NAMES.put( LINEAR_VELOCITY_NO_PAUSES, "Linear velocity w/o pauses" );
+		FEATURE_NAMES.put( N_SPOTS_IN_RUNS, "N spots in run segments" );
 
 		FEATURE_SHORT_NAMES = new HashMap< String, String >( 4 );
 		FEATURE_SHORT_NAMES.put( NUMBER_OF_PAUSES, "N pauses" );
 		FEATURE_SHORT_NAMES.put( PAUSE_MEAN_DURATION, "Pause duration" );
 		FEATURE_SHORT_NAMES.put( MEAN_VELOCITY_NO_PAUSES, "Mean V. w/o pauses" );
 		FEATURE_SHORT_NAMES.put( LINEAR_VELOCITY_NO_PAUSES, "Linear V. w/o pauses" );
+		FEATURE_SHORT_NAMES.put( N_SPOTS_IN_RUNS, "N spots in runs" );
 
 		FEATURE_DIMENSIONS = new HashMap< String, Dimension >( 4 );
 		FEATURE_DIMENSIONS.put( NUMBER_OF_PAUSES, Dimension.NONE );
 		FEATURE_DIMENSIONS.put( PAUSE_MEAN_DURATION, Dimension.TIME );
 		FEATURE_DIMENSIONS.put( MEAN_VELOCITY_NO_PAUSES, Dimension.VELOCITY );
 		FEATURE_DIMENSIONS.put( LINEAR_VELOCITY_NO_PAUSES, Dimension.VELOCITY );
+		FEATURE_DIMENSIONS.put( N_SPOTS_IN_RUNS, Dimension.NONE );
 
 		IS_INT = new HashMap< String, Boolean >( 4 );
 		IS_INT.put( NUMBER_OF_PAUSES, Boolean.TRUE );
 		IS_INT.put( PAUSE_MEAN_DURATION, Boolean.FALSE );
 		IS_INT.put( MEAN_VELOCITY_NO_PAUSES, Boolean.FALSE );
 		IS_INT.put( LINEAR_VELOCITY_NO_PAUSES, Boolean.FALSE );
+		IS_INT.put( N_SPOTS_IN_RUNS, Boolean.TRUE );
 	}
 
 	private long processingTime;

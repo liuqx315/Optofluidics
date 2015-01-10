@@ -69,6 +69,7 @@ public class VelocityAnalysisExporter
 
 		list.add( TrackPausingAnalyzer.MEAN_VELOCITY_NO_PAUSES );
 		list.add( TrackPausingAnalyzer.LINEAR_VELOCITY_NO_PAUSES );
+		list.add( TrackPausingAnalyzer.N_SPOTS_IN_RUNS );
 		list.add( TrackPausingAnalyzer.NUMBER_OF_PAUSES );
 		list.add( TrackPausingAnalyzer.PAUSE_MEAN_DURATION );
 
