@@ -58,7 +58,7 @@ import fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFactory;
 /**
  * A TrackMate model view that specializes for image sequences with individual
  * frames being a single line.
- * 
+ *
  * @author Jean-Yves Tinevez - 2014
  */
 public class ProfileView extends AbstractTrackMateModelView
@@ -400,6 +400,11 @@ public class ProfileView extends AbstractTrackMateModelView
 		// Center on last spot
 		super.selectionChanged( event );
 		refresh();
+	}
+
+	public ProfileOverlay getProfileOverlay()
+	{
+		return profileOverlay;
 	}
 
 	/*

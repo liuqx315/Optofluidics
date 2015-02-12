@@ -25,6 +25,7 @@ import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.features.spot.SpotIntensityAnalyzerFactory;
 import fiji.plugin.trackmate.visualization.FeatureColorGenerator;
+import fiji.plugin.trackmate.visualization.PerTrackFeatureColorGenerator;
 import fiji.plugin.trackmate.visualization.TrackColorGenerator;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
@@ -43,10 +44,24 @@ public class ProfileOverlay implements Overlay
 
 	private final Model model;
 
+	private boolean displayTracks = true;
+
+	private PerTrackFeatureColorGenerator trackFeatureColorGenerator;
+
 	public ProfileOverlay( final Model model, final Map< String, Object > displaySettings )
 	{
 		this.model = model;
 		this.displaySettings = displaySettings;
+	}
+
+	public void setTrackColorGenerator( final PerTrackFeatureColorGenerator colorGenerator )
+	{
+		this.trackFeatureColorGenerator = colorGenerator;
+	}
+
+	public void setDisplayTracks( final boolean displayTracks )
+	{
+		this.displayTracks = displayTracks;
 	}
 
 	@Override
@@ -81,7 +96,16 @@ public class ProfileOverlay implements Overlay
 					continue;
 				}
 
-				final Color color = colorGenerator.color( spot );
+				final Color color;
+				if ( trackFeatureColorGenerator == null )
+				{
+					color = colorGenerator.color( spot );
+
+				}
+				else
+				{
+					color = trackFeatureColorGenerator.colorOf( model.getTrackModel().trackIDOf( spot ) );
+				}
 				g2d.setColor( color );
 
 				drawSpot( spot, g2d, plot, plotArea, radiusRatio, spotNameVisible );
@@ -109,7 +133,7 @@ public class ProfileOverlay implements Overlay
 		 */
 
 		final boolean tracksVisible = ( Boolean ) displaySettings.get( TrackMateModelView.KEY_TRACKS_VISIBLE );
-		if ( tracksVisible && model.getTrackModel().nTracks( true ) > 0 )
+		if ( displayTracks && tracksVisible && model.getTrackModel().nTracks( true ) > 0 )
 		{
 
 			final int trackDisplayMode = ( Integer ) displaySettings.get( TrackMateModelView.KEY_TRACK_DISPLAY_MODE );
