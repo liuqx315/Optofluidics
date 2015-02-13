@@ -3,3 +3,4 @@
 /.settings/
 /target/
 /samples/
+.DS_Store
