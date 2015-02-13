@@ -22,6 +22,7 @@ import ij.measure.Calibration;
 import ij.plugin.PlugIn;
 import ij.process.ImageProcessor;
 
+import java.awt.Color;
 import java.util.Map;
 
 import javax.swing.SwingUtilities;
@@ -30,10 +31,11 @@ import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 
 import com.optofluidics.Main;
+import com.optofluidics.OptofluidicsParameters;
 import com.optofluidics.trackmate.visualization.ProfileView;
 import com.optofluidics.trackmate.visualization.ProfileViewHorizontalFactory;
 
-public class OpFluidTrackMate< T extends RealType< T > & NativeType< T >> implements PlugIn
+public class OpfluidTrackMate< T extends RealType< T > & NativeType< T >> implements PlugIn
 {
 
 	/**
@@ -57,25 +59,22 @@ public class OpFluidTrackMate< T extends RealType< T > & NativeType< T >> implem
 
 	private SelectionModel selectionModel;
 
-	public OpFluidTrackMate()
+	public OpfluidTrackMate()
 	{
 		this.numThreads = Runtime.getRuntime().availableProcessors();
 	}
 
-	/**
-	 * Runs the TrackMate GUI plugin.
-	 *
-	 * @param imagePath
-	 *            a path to an image that can be read by ImageJ. If set, the
-	 *            image will be opened and TrackMate will be started set to
-	 *            operate on it. If <code>null</code> or 0-length, TrackMate
-	 *            will be set to operate on the image currently opened in
-	 *            ImageJ.
-	 */
+
 	@Override
 	public void run( final String imagePath )
 	{
-		logger.log( PLUGIN_NAME_STR + " v" + Main.OPTOFLUIDICS_LIB_VERSION + " starting." );
+		logger.log( PLUGIN_NAME_STR + " v" + Main.OPTOFLUIDICS_LIB_VERSION + " starting.", Color.BLUE );
+
+		/*
+		 * 0. Load file and parameters.
+		 */
+
+		final OptofluidicsParameters parameters = new OptofluidicsParameters( logger );
 
 		final ImagePlus imp;
 		if ( imagePath != null && imagePath.length() > 0 )
@@ -132,9 +131,9 @@ public class OpFluidTrackMate< T extends RealType< T > & NativeType< T >> implem
 		final Map< String, Object > detectionSettings = settings.detectorFactory.getDefaultSettings();
 		detectionSettings.put( DetectorKeys.KEY_DO_MEDIAN_FILTERING, false );
 		detectionSettings.put( DetectorKeys.KEY_DO_SUBPIXEL_LOCALIZATION, true );
-		detectionSettings.put( DetectorKeys.KEY_RADIUS, 2d );
+		detectionSettings.put( DetectorKeys.KEY_RADIUS, parameters.getParticleDiameter() );
 		detectionSettings.put( DetectorKeys.KEY_TARGET_CHANNEL, 0 );
-		detectionSettings.put( DetectorKeys.KEY_THRESHOLD, threshold );
+		detectionSettings.put( DetectorKeys.KEY_THRESHOLD, parameters.getQualityThreshold() );
 		settings.detectorSettings = detectionSettings;
 
 		final long detectionTStart = System.currentTimeMillis();
@@ -161,9 +160,16 @@ public class OpFluidTrackMate< T extends RealType< T > & NativeType< T >> implem
 
 		settings.trackerFactory = new KalmanTrackerFactory();
 		final Map< String, Object > trackerSettings = settings.trackerFactory.getDefaultSettings();
-		trackerSettings.put( KalmanTrackerFactory.KEY_KALMAN_SEARCH_RADIUS, 4d );
-		trackerSettings.put( TrackerKeys.KEY_GAP_CLOSING_MAX_FRAME_GAP, 50 );
-		trackerSettings.put( TrackerKeys.KEY_LINKING_MAX_DISTANCE, 8d );
+		trackerSettings.put( KalmanTrackerFactory.KEY_KALMAN_SEARCH_RADIUS, parameters.getTrackSearchRadius() );
+		trackerSettings.put( TrackerKeys.KEY_GAP_CLOSING_MAX_FRAME_GAP, parameters.getMaxFrameGap() );
+		trackerSettings.put( TrackerKeys.KEY_LINKING_MAX_DISTANCE, parameters.getTrackInitRadius() );
+
+//		settings.trackerFactory = new SimpleLAPTrackerFactory();
+//		final Map< String, Object > trackerSettings = settings.trackerFactory.getDefaultSettings();
+//		trackerSettings.put( TrackerKeys.KEY_LINKING_MAX_DISTANCE, parameters.getTrackSearchRadius() );
+//		trackerSettings.put( TrackerKeys.KEY_GAP_CLOSING_MAX_FRAME_GAP, parameters.getMaxFrameGap() );
+//		trackerSettings.put( TrackerKeys.KEY_GAP_CLOSING_MAX_DISTANCE, parameters.getTrackInitRadius() );
+
 		settings.trackerSettings = trackerSettings;
 
 		final long trackingTStart = System.currentTimeMillis();
@@ -207,6 +213,8 @@ public class OpFluidTrackMate< T extends RealType< T > & NativeType< T >> implem
 		} );
 
 	}
+
+
 
 	protected double estimateThreshold( final ImagePlus imp )
 	{
@@ -339,7 +347,7 @@ public class OpFluidTrackMate< T extends RealType< T > & NativeType< T >> implem
 	public static void main( final String[] args )
 	{
 		ImageJ.main( args );
-		new OpFluidTrackMate().run( "samples/Pos0_ColumnSum.tif" );
+		new OpfluidTrackMate().run( "samples/Pos0_ColumnSum.tif" );
 	}
 
 }
