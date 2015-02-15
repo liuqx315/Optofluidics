@@ -80,51 +80,14 @@ public class VelocityAnalysisExporter
 
 	public void exportToImageJTable()
 	{
-		final FeatureModel fm = model.getFeatureModel();
+		final ResultsTable trackTable = getTable();
+
 		final Set< Integer > trackIDs = model.getTrackModel().trackIDs( true );
-
-		// Create table
-		final ResultsTable trackTable = new ResultsTable();
-
-		// Sort by track
 		final Integer[] ids = new Integer[ trackIDs.size() ];
 		int idIndex = 0;
 		for ( final Integer trackID : trackIDs )
 		{
 			ids[ idIndex++ ] = trackID;
-			trackTable.incrementCounter();
-			trackTable.addLabel( model.getTrackModel().name( trackID ) );
-			for ( final String feature : trackFeatures )
-			{
-				final Dimension dimension = fm.getTrackFeatureDimensions().get( feature );
-				final String dimStr;
-				if ( dimension.equals( Dimension.NONE ) )
-				{
-					dimStr = "";
-				}
-				else
-				{
-					dimStr = " (" + TMUtils.getUnitsFor( fm.getTrackFeatureDimensions().get( feature ), model.getSpaceUnits(), model.getTimeUnits() ) + ")";
-				}
-				final String featureStr = fm.getTrackFeatureNames().get( feature ) + dimStr;
-
-				final Double val = fm.getTrackFeature( trackID, feature );
-				if ( null == val )
-				{
-					trackTable.addValue( featureStr, "None" );
-				}
-				else
-				{
-					if ( fm.getTrackFeatureIsInt().get( feature ).booleanValue() )
-					{
-						trackTable.addValue( featureStr, "" + val.intValue() );
-					}
-					else
-					{
-						trackTable.addValue( featureStr, val.doubleValue() );
-					}
-				}
-			}
 		}
 
 		// Show tables
@@ -159,6 +122,60 @@ public class VelocityAnalysisExporter
 
 			} );
 		}
+	}
+
+	public ResultsTable getTable()
+	{
+		final FeatureModel fm = model.getFeatureModel();
+		final Set< Integer > trackIDs = model.getTrackModel().trackIDs( true );
+
+		// Create table
+		final ResultsTable trackTable = new ResultsTable();
+
+		// Sort by track
+		for ( final Integer trackID : trackIDs )
+		{
+			trackTable.incrementCounter();
+			trackTable.addLabel( model.getTrackModel().name( trackID ) );
+			for ( final String feature : trackFeatures )
+			{
+				final Dimension dimension = fm.getTrackFeatureDimensions().get( feature );
+
+				if ( null == dimension )
+				{
+					System.out.println( "Missing feature " + feature );// DEBUG
+				}
+
+				final String dimStr;
+				if ( dimension.equals( Dimension.NONE ) )
+				{
+					dimStr = "";
+				}
+				else
+				{
+					dimStr = " (" + TMUtils.getUnitsFor( fm.getTrackFeatureDimensions().get( feature ), model.getSpaceUnits(), model.getTimeUnits() ) + ")";
+				}
+				final String featureStr = fm.getTrackFeatureNames().get( feature ) + dimStr;
+
+				final Double val = fm.getTrackFeature( trackID, feature );
+				if ( null == val )
+				{
+					trackTable.addValue( featureStr, "None" );
+				}
+				else
+				{
+					if ( fm.getTrackFeatureIsInt().get( feature ).booleanValue() )
+					{
+						trackTable.addValue( featureStr, "" + val.intValue() );
+					}
+					else
+					{
+						trackTable.addValue( featureStr, val.doubleValue() );
+					}
+				}
+			}
+		}
+		return trackTable;
 	}
 
 }
