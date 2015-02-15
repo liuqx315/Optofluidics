@@ -51,7 +51,7 @@ public class OptofluidicsTrackerProcess implements MultiThreaded, Algorithm
 	@SuppressWarnings( "rawtypes" )
 	public boolean process()
 	{
-		logger.log( "Found image " + imp.getShortTitle() + ", " + imp.getWidth() + 'x' + imp.getHeight() + " with " + imp.getNFrames() + " frames." );
+		logger.log( "Source image " + imp.getTitle() + ", " + imp.getWidth() + 'x' + imp.getHeight() + " with " + imp.getNFrames() + " frames.\n" );
 
 		/*
 		 * 2. Instantiate main classes.
@@ -69,7 +69,7 @@ public class OptofluidicsTrackerProcess implements MultiThreaded, Algorithm
 
 		final double threshold = parameters.getQualityThreshold();
 
-		logger.log( "Spot quality threshold estimated to be " + threshold );
+		logger.log( "Spot quality threshold set to be " + threshold + ".\n" );
 
 		settings.detectorFactory = new LogDetectorFactory();
 		final Map< String, Object > detectionSettings = settings.detectorFactory.getDefaultSettings();
@@ -89,7 +89,7 @@ public class OptofluidicsTrackerProcess implements MultiThreaded, Algorithm
 		}
 		final long detectionTEnd = System.currentTimeMillis();
 		final double detectionTime = ( detectionTEnd - detectionTStart ) / 1000;
-		logger.log( "Detection completed in " + detectionTime + " s." );
+		logger.log( "Detection completed in " + detectionTime + " s.\n" );
 
 		/*
 		 * 4. Spot feature calculation.
@@ -125,14 +125,16 @@ public class OptofluidicsTrackerProcess implements MultiThreaded, Algorithm
 		}
 		final long trackingTEnd = System.currentTimeMillis();
 		final double trackingTime = ( trackingTEnd - trackingTStart ) / 1000;
-		logger.log( "Found " + model.getTrackModel().nTracks( true ) );
-		logger.log( "Track building completed in " + trackingTime + " s." );
+		logger.log( "Found " + model.getTrackModel().nTracks( true ) + " tracks.\n" );
+		logger.log( "Track building completed in " + trackingTime + " s.\n" );
 
 		/*
 		 * 6. Track features calculation
 		 */
 
+		trackmate.computeEdgeFeatures( true );
 		trackmate.computeTrackFeatures( true );
+
 		return true;
 	}
 
