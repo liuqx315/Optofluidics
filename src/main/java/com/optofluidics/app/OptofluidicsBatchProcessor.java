@@ -5,6 +5,9 @@ import static fiji.plugin.trackmate.io.TmXmlKeys.GUI_STATE_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.GUI_VIEW_ATTRIBUTE;
 import static fiji.plugin.trackmate.io.TmXmlKeys.GUI_VIEW_ELEMENT_KEY;
 import fiji.plugin.trackmate.Logger;
+import fiji.plugin.trackmate.Model;
+import fiji.plugin.trackmate.SelectionModel;
+import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.gui.TrackMateGUIModel;
 import fiji.plugin.trackmate.gui.descriptors.ConfigureViewsDescriptor;
 import fiji.plugin.trackmate.io.TmXmlWriter;
@@ -12,6 +15,7 @@ import fiji.plugin.trackmate.visualization.ViewFactory;
 import fiji.util.gui.GenericDialogPlus;
 import ij.ImageJ;
 import ij.ImagePlus;
+import ij.measure.ResultsTable;
 import ij.plugin.PlugIn;
 
 import java.io.BufferedWriter;
@@ -28,6 +32,8 @@ import org.jdom2.Element;
 
 import com.optofluidics.Main;
 import com.optofluidics.OptofluidicsParameters;
+import com.optofluidics.trackmate.action.TrackVelocityThresholder;
+import com.optofluidics.trackmate.action.VelocityAnalysisExporter;
 import com.optofluidics.trackmate.visualization.ProfileViewHorizontalFactory;
 import com.optofluidics.util.IndentLogger;
 import com.optofluidics.util.LogRecorder;
@@ -43,7 +49,7 @@ public class OptofluidicsBatchProcessor implements PlugIn
 			+ "files, one file per frame."
 			+ "<p>"
 			+ "They will be processed in batch, using the parameters stored in the "
-			+ "<code>optifluidics.parameter</code> file."
+			+ "<code>optifluidics.properties</code> file."
 			+ "</html>";
 
 	private String path;
@@ -214,6 +220,10 @@ public class OptofluidicsBatchProcessor implements PlugIn
 			}
 			else
 			{
+				/*
+				 * Execute tracking.
+				 */
+
 				final OptofluidicsTrackerProcess tracker = new OptofluidicsTrackerProcess( imp, parameters, recorder );
 				if ( !tracker.checkInput() || !tracker.process() )
 				{
@@ -221,7 +231,51 @@ public class OptofluidicsBatchProcessor implements PlugIn
 				}
 				else
 				{
+					final Model model = tracker.getModel();
+					final Settings settings = tracker.getSettings();
+					final SelectionModel selectionModel = new SelectionModel( model );
+
+					/*
+					 * Velocity macro analysis.
+					 */
+
+					final double velocityThreshold = parameters.getVelocityThreshold();
+					final int minConsecutiveFrames = parameters.getMinConsecutiveFrames();
+					final int smoothingWindow = parameters.getSmoothingWindow();
+
+					final TrackVelocityThresholder thresholder = new TrackVelocityThresholder( model, velocityThreshold, minConsecutiveFrames, smoothingWindow );
+					thresholder.setLogger( recorder );
+					if ( !thresholder.checkInput() || !thresholder.process() )
+					{
+						recorder.error( thresholder.getErrorMessage() );
+						return;
+					}
+
+					recorder.log( "Velocity analysis done.\n" );
+
+					/*
+					 * Export velocity analysis.
+					 */
 					final String title = imp.getTitle();
+					final String analysisFilename = title.substring( 0, title.length() - 4 ) + ".csv";;
+					final VelocityAnalysisExporter exporter = new VelocityAnalysisExporter( model, selectionModel );
+					final String analysisFilePath = new File( folder, analysisFilename ).getAbsolutePath();
+					try
+					{
+						final ResultsTable resultsTable = exporter.getTable();
+						resultsTable.showRowNumbers( false );
+						resultsTable.saveAs( analysisFilePath );
+						recorder.log( "Exporting analysis results to " + analysisFilePath + " done.\n" );
+					}
+					catch ( final IOException e1 )
+					{
+						recorder.error( "Could not export analysis results to file " + analysisFilePath + ".\n" );
+					}
+
+					/*
+					 * Save to XML.
+					 */
+
 					final String xmlFilename = title.substring( 0, title.length() - 4 ) + ".xml";
 					final File targetFile = new File( folder, xmlFilename );
 
@@ -240,13 +294,14 @@ public class OptofluidicsBatchProcessor implements PlugIn
 						}
 
 					};
-					writer.appendModel( tracker.getModel() );
-					writer.appendSettings( tracker.getSettings() );
+					writer.appendModel( model );
+					writer.appendSettings( settings );
 					writer.appendLog( recorder.toString() );
 					writer.appendGUIState( null );
 					try
 					{
 						writer.writeToFile();
+						recorder.log( "Writing to " + targetFile + " done.\n" );
 					}
 					catch ( final FileNotFoundException e )
 					{
@@ -258,7 +313,6 @@ public class OptofluidicsBatchProcessor implements PlugIn
 						recorder.error( "Could not write to " + targetFile + ": " + e.getMessage() + ".\n" );
 						e.printStackTrace();
 					}
-					recorder.log( "Writing to " + targetFile + " done.\n" );
 
 				}
 
@@ -268,7 +322,7 @@ public class OptofluidicsBatchProcessor implements PlugIn
 
 		}
 
-		logger.log( "All files processed -  " + new Date() + ".\n" );
+		logger.log( "\nAll files processed -  " + new Date() + ".\n" );
 
 		final File logFile = new File( folder, "log.txt" );
 		try

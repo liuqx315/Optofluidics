@@ -7,8 +7,13 @@ import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.detection.DetectorKeys;
 import fiji.plugin.trackmate.detection.LogDetectorFactory;
 import fiji.plugin.trackmate.features.edges.EdgeTargetAnalyzer;
+import fiji.plugin.trackmate.features.edges.EdgeTimeLocationAnalyzer;
+import fiji.plugin.trackmate.features.edges.EdgeVelocityAnalyzer;
 import fiji.plugin.trackmate.features.spot.SpotIntensityAnalyzerFactory;
+import fiji.plugin.trackmate.features.track.TrackBranchingAnalyzer;
+import fiji.plugin.trackmate.features.track.TrackDurationAnalyzer;
 import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
+import fiji.plugin.trackmate.features.track.TrackSpeedStatisticsAnalyzer;
 import fiji.plugin.trackmate.tracking.TrackerKeys;
 import fiji.plugin.trackmate.tracking.kalman.KalmanTrackerFactory;
 import ij.ImagePlus;
@@ -19,6 +24,11 @@ import net.imglib2.algorithm.Algorithm;
 import net.imglib2.algorithm.MultiThreaded;
 
 import com.optofluidics.OptofluidicsParameters;
+import com.optofluidics.trackmate.features.manual.EdgeSmoothedVelocityAnalyzer;
+import com.optofluidics.trackmate.features.manual.MotionTypeEdgeAnalyzer;
+import com.optofluidics.trackmate.features.manual.TrackPausingAnalyzer;
+import com.optofluidics.trackmate.features.track.TrackLinearVelocityAnalyzer;
+import com.optofluidics.trackmate.features.track.TrackSpotIntensityAnalyzer;
 
 public class OptofluidicsTrackerProcess implements MultiThreaded, Algorithm
 {
@@ -183,6 +193,22 @@ public class OptofluidicsTrackerProcess implements MultiThreaded, Algorithm
 		settings.addSpotAnalyzerFactory( new SpotIntensityAnalyzerFactory() );
 		settings.addEdgeAnalyzer( new EdgeTargetAnalyzer() );
 		settings.addTrackAnalyzer( new TrackIndexAnalyzer() );
+
+		/*
+		 * Optofluidics specials.
+		 */
+
+		settings.addEdgeAnalyzer( new EdgeVelocityAnalyzer() );
+		settings.addEdgeAnalyzer( new EdgeTimeLocationAnalyzer() );
+		settings.addEdgeAnalyzer( new EdgeSmoothedVelocityAnalyzer() );
+		settings.addEdgeAnalyzer( new MotionTypeEdgeAnalyzer() );
+
+		settings.addTrackAnalyzer( new TrackBranchingAnalyzer() );
+		settings.addTrackAnalyzer( new TrackSpeedStatisticsAnalyzer() );
+		settings.addTrackAnalyzer( new TrackDurationAnalyzer() );
+		settings.addTrackAnalyzer( new TrackLinearVelocityAnalyzer() );
+		settings.addTrackAnalyzer( new TrackSpotIntensityAnalyzer() );
+		settings.addTrackAnalyzer( new TrackPausingAnalyzer() );
 
 		return settings;
 	}
