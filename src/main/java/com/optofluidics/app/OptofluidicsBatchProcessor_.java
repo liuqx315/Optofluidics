@@ -39,7 +39,7 @@ import com.optofluidics.util.IndentLogger;
 import com.optofluidics.util.LogRecorder;
 import com.optofluidics.util.OptofluidicsUtil;
 
-public class OptofluidicsBatchProcessor implements PlugIn
+public class OptofluidicsBatchProcessor_ implements PlugIn
 {
 
 	private static final String HELP_TEXT = "<html>Browse to a folder where "
@@ -351,7 +351,7 @@ public class OptofluidicsBatchProcessor implements PlugIn
 	public static void main( final String[] args )
 	{
 		ImageJ.main( args );
-		new OptofluidicsBatchProcessor().run( "D:/Users/Jean-Yves/Development/Optofluidics/samples/Data" );
+		new OptofluidicsBatchProcessor_().run( "D:/Users/Jean-Yves/Development/Optofluidics/samples/Data" );
 	}
 
 }
