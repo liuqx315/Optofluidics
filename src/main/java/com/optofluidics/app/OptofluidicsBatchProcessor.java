@@ -1,21 +1,36 @@
 package com.optofluidics.app;
 
+import static fiji.plugin.trackmate.io.TmXmlKeys.GUI_STATE_ATTRIBUTE;
+import static fiji.plugin.trackmate.io.TmXmlKeys.GUI_STATE_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.GUI_VIEW_ATTRIBUTE;
+import static fiji.plugin.trackmate.io.TmXmlKeys.GUI_VIEW_ELEMENT_KEY;
 import fiji.plugin.trackmate.Logger;
+import fiji.plugin.trackmate.gui.TrackMateGUIModel;
+import fiji.plugin.trackmate.gui.descriptors.ConfigureViewsDescriptor;
 import fiji.plugin.trackmate.io.TmXmlWriter;
+import fiji.plugin.trackmate.visualization.ViewFactory;
 import fiji.util.gui.GenericDialogPlus;
 import ij.ImageJ;
 import ij.ImagePlus;
 import ij.plugin.PlugIn;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.FilenameFilter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import org.jdom2.Element;
+
 import com.optofluidics.Main;
 import com.optofluidics.OptofluidicsParameters;
+import com.optofluidics.trackmate.visualization.ProfileViewHorizontalFactory;
 import com.optofluidics.util.IndentLogger;
+import com.optofluidics.util.LogRecorder;
 import com.optofluidics.util.OptofluidicsUtil;
 
 public class OptofluidicsBatchProcessor implements PlugIn
@@ -33,12 +48,12 @@ public class OptofluidicsBatchProcessor implements PlugIn
 
 	private String path;
 
-	private Logger logger = Logger.DEFAULT_LOGGER;
+	private LogRecorder logger = new LogRecorder( Logger.DEFAULT_LOGGER );
 
 	@Override
 	public void run( final String folder )
 	{
-		logger = Logger.IJ_LOGGER;
+		logger = new LogRecorder( Logger.IJ_LOGGER );
 		if ( null == folder || folder.isEmpty() )
 		{
 			// Use dialog.
@@ -180,42 +195,99 @@ public class OptofluidicsBatchProcessor implements PlugIn
 		 * If needed, open and convert tif folders.
 		 */
 
-		final Logger ilogge = new IndentLogger( logger, 4 );
-		final TiffFolderOpenerConverter opener = new TiffFolderOpenerConverter( ilogge );
+		final Logger ilogger = new IndentLogger( logger, 4 );
+		final TiffFolderOpenerConverter opener = new TiffFolderOpenerConverter( ilogger );
 		final List< File > toProcess = new ArrayList< File >( folders );
 		toProcess.addAll( tifFiles );
+
+		final ViewFactory viewFactory = new ProfileViewHorizontalFactory();
+		final String viewKey = viewFactory.getKey();
 
 		for ( final File file : toProcess )
 		{
 			logger.log( "\nProcessing " + file + " - " + new Date() + ".\n" );
+			final LogRecorder recorder = new LogRecorder( ilogger );
 			final ImagePlus imp = opener.open( file, true );
 			if ( null == imp )
 			{
-				logger.log( "Problem encountered. Skipping.\n" );
+				recorder.log( "Problem encountered. Skipping.\n" );
 			}
 			else
 			{
-				final OptofluidicsTrackerProcess tracker = new OptofluidicsTrackerProcess( imp, parameters, ilogge );
+				final OptofluidicsTrackerProcess tracker = new OptofluidicsTrackerProcess( imp, parameters, recorder );
 				if ( !tracker.checkInput() || !tracker.process() )
 				{
-					logger.log( "Problem encountered during tracking process:\n" + tracker.getErrorMessage() );
+					recorder.log( "Problem encountered during tracking process:\n" + tracker.getErrorMessage() );
 				}
 				else
 				{
-					final File targetFile = new File( folder, imp.getShortTitle() + ".xml" );
-					final TmXmlWriter writer = new TmXmlWriter( targetFile, ilogge );
+					final String title = imp.getTitle();
+					final String xmlFilename = title.substring( 0, title.length() - 4 ) + ".xml";
+					final File targetFile = new File( folder, xmlFilename );
+
+					final TmXmlWriter writer = new TmXmlWriter( targetFile, recorder ) {
+						@Override
+						public void appendGUIState( final TrackMateGUIModel guimodel )
+						{
+							final Element guiel = new Element( GUI_STATE_ELEMENT_KEY );
+							guiel.setAttribute( GUI_STATE_ATTRIBUTE, ConfigureViewsDescriptor.KEY );
+							final Element viewel = new Element( GUI_VIEW_ELEMENT_KEY );
+							viewel.setAttribute( GUI_VIEW_ATTRIBUTE, viewKey );
+							guiel.addContent( viewel );
+
+							root.addContent( guiel );
+							logger.log( "  Added GUI current state.\n" );
+						}
+
+					};
 					writer.appendModel( tracker.getModel() );
 					writer.appendSettings( tracker.getSettings() );
-					writer.appendLog( logRecorder );
-					writer.appendGUIState( guiState );
+					writer.appendLog( recorder.toString() );
+					writer.appendGUIState( null );
+					try
+					{
+						writer.writeToFile();
+					}
+					catch ( final FileNotFoundException e )
+					{
+						recorder.error( "Culd not find target file: " + e.getMessage() + "\n" );
+						e.printStackTrace();
+					}
+					catch ( final IOException e )
+					{
+						recorder.error( "Could not write to " + targetFile + ": " + e.getMessage() + ".\n" );
+						e.printStackTrace();
+					}
+					recorder.log( "Writing to " + targetFile + " done.\n" );
+
 				}
 
-				logger.log( "Done - " + new Date() + ".\n" );
+				ilogger.log( "Done - " + new Date() + ".\n" );
 
 			}
 
 		}
 
+		logger.log( "All files processed -  " + new Date() + ".\n" );
+
+		final File logFile = new File( folder, "log.txt" );
+		try
+		{
+			writeLog( logger.toString(), logFile );
+		}
+		catch ( final IOException e )
+		{
+			logger.error( "Could not write log file: " + e.getMessage() + ".\n" );
+			e.printStackTrace();
+		}
+
+	}
+
+	private void writeLog( final String string, final File logFile ) throws IOException
+	{
+		final BufferedWriter writer = new BufferedWriter( new FileWriter( logFile ) );
+		writer.write( string );
+		writer.close();
 	}
 
 	/*
