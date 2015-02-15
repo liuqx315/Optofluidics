@@ -42,6 +42,18 @@ public class OptofluidicsParameters
 			+ "#\n"
 			+ "# No space around '='!\n\n";
 
+	private static final String KEY_VELOCITY_THRESHOLD = "velocity_threshold";
+
+	private static final double DEFAULT_VELOCITY_THRESHOLD = 1e-2;
+
+	private static final String KEY_MIN_CONSECUTIVE_FRAMES = "min_consecutive_frames";
+
+	private static final int DEFAULT_MIN_CONSECUTIVE_FRAMES = 5;
+
+	private static final String KEY_SMOOTHING_WINDOW = "smoothing_window";
+
+	private static final int DEFAULT_SMOOTHING_WINDOW = 20;
+
 	static
 	{
 		DEFAULT_PARAMETERS.setProperty( KEY_PARTICLE_DIAMETER, "" + DEFAULT_PARTICLE_DIAMETER );
@@ -49,6 +61,11 @@ public class OptofluidicsParameters
 		DEFAULT_PARAMETERS.setProperty( KEY_TRACK_INIT_RADIUS, "" + DEFAULT_TRACK_INIT_RADIUS );
 		DEFAULT_PARAMETERS.setProperty( KEY_TRACK_SEARCH_RADIUS, "" + DEFAULT_TRACK_SEARCH_RADIUS );
 		DEFAULT_PARAMETERS.setProperty( KEY_MAX_FRAME_GAP, "" + DEFAULT_MAX_FRAME_GAP );
+
+		DEFAULT_PARAMETERS.setProperty( KEY_MIN_CONSECUTIVE_FRAMES, "" + DEFAULT_MIN_CONSECUTIVE_FRAMES );
+		DEFAULT_PARAMETERS.setProperty( KEY_SMOOTHING_WINDOW, "" + DEFAULT_SMOOTHING_WINDOW );
+		DEFAULT_PARAMETERS.setProperty( KEY_VELOCITY_THRESHOLD, "" + DEFAULT_VELOCITY_THRESHOLD );
+
 	}
 
 	protected final Properties parameters;
@@ -64,6 +81,12 @@ public class OptofluidicsParameters
 	private double trackSearchRadius;
 
 	private int maxFrameGap;
+
+	private double velocityThreshold;
+
+	private int minConsecutiveFrames;
+
+	private int smoothingWindow;
 
 	public OptofluidicsParameters( final Logger logger )
 	{
@@ -92,14 +115,23 @@ public class OptofluidicsParameters
 			logger.log( "Could not find the " + PROPERTIES_FILE + " properties file. Using default parameters.\n" );
 		}
 
-		// Unwrap
+		/*
+		 * Unwrap
+		 */
+
+		// Tracking
 		this.particleDiameter = readDouble( KEY_PARTICLE_DIAMETER, DEFAULT_PARTICLE_DIAMETER );
 		this.qualityThreshold = readDouble( KEY_QUALITY_THRESHOLD, DEFAULT_QUALITY_THESHOLD );
 		this.trackInitRadius = readDouble( KEY_TRACK_INIT_RADIUS, DEFAULT_TRACK_INIT_RADIUS );
 		this.trackSearchRadius = readDouble( KEY_TRACK_SEARCH_RADIUS, DEFAULT_TRACK_SEARCH_RADIUS );
 		this.maxFrameGap = readInt( KEY_MAX_FRAME_GAP, DEFAULT_MAX_FRAME_GAP );
+
+		// Velocity macro analysis
+		this.velocityThreshold = readDouble( KEY_VELOCITY_THRESHOLD, DEFAULT_VELOCITY_THRESHOLD );
+		this.minConsecutiveFrames = readInt( KEY_MIN_CONSECUTIVE_FRAMES, DEFAULT_MIN_CONSECUTIVE_FRAMES );
+		this.smoothingWindow = readInt( KEY_SMOOTHING_WINDOW, DEFAULT_SMOOTHING_WINDOW );
 	}
-	
+
 	public void write()
 	{
 		OutputStream output = null;
@@ -144,26 +176,39 @@ public class OptofluidicsParameters
 
 	private double readDouble( final String key, final double defaultValue )
 	{
+		final String val = parameters.getProperty( key );
+		if ( null == val )
+		{
+			logger.error( "The parameter " + key + " is not present in the property file. Using default value = " + defaultValue + ".\n" );
+			return defaultValue;
+		}
+
 		try
 		{
-			return Double.parseDouble( parameters.getProperty( key ) );
+			return Double.parseDouble( val );
 		}
 		catch ( final NumberFormatException nfe )
 		{
-			logger.error( "Could not read the " + key + " parameter. Using default value = " + defaultValue + ".\n" );
+			logger.error( "Could not convert the value " + val + " of the " + key + " parameter to a number. Using default value = " + defaultValue + ".\n" );
 			return defaultValue;
 		}
 	}
 
 	private int readInt( final String key, final int defaultValue )
 	{
+		final String val = parameters.getProperty( key );
+		if ( null == val )
+		{
+			logger.error( "The parameter " + key + " is not present in the property file. Using default value = " + defaultValue + ".\n" );
+			return defaultValue;
+		}
 		try
 		{
 			return Integer.parseInt( parameters.getProperty( key ) );
 		}
 		catch ( final NumberFormatException nfe )
 		{
-			logger.error( "Could not read the " + key + " parameter. Using default value = " + defaultValue + ".\n" );
+			logger.error( "Could not convert the value " + val + " of the " + key + " parameter to an integer. Using default value = " + defaultValue + ".\n" );
 			return defaultValue;
 		}
 	}
@@ -216,6 +261,40 @@ public class OptofluidicsParameters
 	public void setMaxFrameGap( final int maxFrameGap )
 	{
 		this.maxFrameGap = maxFrameGap;
+	}
+
+	/*
+	 * Velocity macro analysis.
+	 */
+
+	public double getVelocityThreshold()
+	{
+		return velocityThreshold;
+	}
+
+	public void setVelocityThreshold( final double velocityThreshold )
+	{
+		this.velocityThreshold = velocityThreshold;
+	}
+
+	public int getMinConsecutiveFrames()
+	{
+		return minConsecutiveFrames;
+	}
+
+	public void setMinConsecutiveFrames( final int minConsecutiveFrames )
+	{
+		this.minConsecutiveFrames = minConsecutiveFrames;
+	}
+
+	public int getSmoothingWindow()
+	{
+		return smoothingWindow;
+	}
+
+	public void setSmoothingWindow( final int smoothingWindow )
+	{
+		this.smoothingWindow = smoothingWindow;
 	}
 
 	public static void main( final String[] args )
