@@ -4,10 +4,12 @@ import static fiji.plugin.trackmate.io.TmXmlKeys.GUI_STATE_ATTRIBUTE;
 import static fiji.plugin.trackmate.io.TmXmlKeys.GUI_STATE_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.GUI_VIEW_ATTRIBUTE;
 import static fiji.plugin.trackmate.io.TmXmlKeys.GUI_VIEW_ELEMENT_KEY;
+import fiji.plugin.trackmate.FeatureModel;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.SelectionModel;
 import fiji.plugin.trackmate.Settings;
+import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.gui.TrackMateGUIModel;
 import fiji.plugin.trackmate.gui.descriptors.ConfigureViewsDescriptor;
 import fiji.plugin.trackmate.io.TmXmlWriter;
@@ -25,8 +27,11 @@ import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 import org.jdom2.Element;
 
@@ -234,11 +239,35 @@ public class OptofluidicsBatchProcessor_ implements PlugIn
 					final Model model = tracker.getModel();
 					final Settings settings = tracker.getSettings();
 					final SelectionModel selectionModel = new SelectionModel( model );
+					final String title = imp.getTitle();
+
+					/*
+					 * Spots in track analysis.
+					 */
+
+					recorder.log( "Generating spots statistics.\n" );
+					final ResultsTable spotsStatsTable = getSpotsIntTracksStatistics( model );
+					spotsStatsTable.showRowNumbers( false );
+
+					final String spotStatsFilename = title.substring( 0, title.length() - 4 ) + "_SpotsStats.csv";
+					final String spotStatsFilePath =  new File( folder, spotStatsFilename ).getAbsolutePath();
+					try
+					{
+						spotsStatsTable.saveAs( spotStatsFilePath );
+					}
+					catch ( final IOException e2 )
+					{
+						recorder.error( "Could not export spots statistics to file " + spotStatsFilePath + ".\n" );
+						e2.printStackTrace();
+					}
+					recorder.log( "Exporting spots statistics to " + spotStatsFilePath + " done.\n" );
+					recorder.log( " Done.\n" );
 
 					/*
 					 * Velocity macro analysis.
 					 */
 
+					recorder.log( "Performing velocity analysis.\n" );
 					final double velocityThreshold = parameters.getVelocityThreshold();
 					final int minConsecutiveFrames = parameters.getMinConsecutiveFrames();
 					final int smoothingWindow = parameters.getSmoothingWindow();
@@ -256,20 +285,20 @@ public class OptofluidicsBatchProcessor_ implements PlugIn
 					/*
 					 * Export velocity analysis.
 					 */
-					final String title = imp.getTitle();
-					final String analysisFilename = title.substring( 0, title.length() - 4 ) + ".csv";;
+
+					final String velocityAnalysisFilename = title.substring( 0, title.length() - 4 ) + "_VelocityStats.csv";
 					final VelocityAnalysisExporter exporter = new VelocityAnalysisExporter( model, selectionModel );
-					final String analysisFilePath = new File( folder, analysisFilename ).getAbsolutePath();
+					final String velocityAnalysisFilePath = new File( folder, velocityAnalysisFilename ).getAbsolutePath();
 					try
 					{
-						final ResultsTable resultsTable = exporter.getTable();
-						resultsTable.showRowNumbers( false );
-						resultsTable.saveAs( analysisFilePath );
-						recorder.log( "Exporting analysis results to " + analysisFilePath + " done.\n" );
+						final ResultsTable velocityAnalysisTable = exporter.getTable();
+						velocityAnalysisTable.showRowNumbers( false );
+						velocityAnalysisTable.saveAs( velocityAnalysisFilePath );
+						recorder.log( "Exporting velocity analysis results to " + velocityAnalysisFilePath + " done.\n" );
 					}
 					catch ( final IOException e1 )
 					{
-						recorder.error( "Could not export analysis results to file " + analysisFilePath + ".\n" );
+						recorder.error( "Could not export velocity analysis results to file " + velocityAnalysisFilePath + ".\n" );
 					}
 
 					/*
@@ -335,6 +364,54 @@ public class OptofluidicsBatchProcessor_ implements PlugIn
 			e.printStackTrace();
 		}
 
+	}
+
+	private ResultsTable getSpotsIntTracksStatistics( final Model model )
+	{
+
+		final FeatureModel fm = model.getFeatureModel();
+		final Set< Integer > trackIDs = model.getTrackModel().trackIDs( true );
+		final Collection< String > spotFeatures = fm.getSpotFeatures();
+
+		// Create table
+		final ResultsTable spotTable = new ResultsTable();
+
+		// Parse spots to insert values as objects
+		for ( final Integer trackID : trackIDs )
+		{
+			final Set< Spot > track = model.getTrackModel().trackSpots( trackID );
+			// Sort by frame
+			final List< Spot > sortedTrack = new ArrayList< Spot >( track );
+			Collections.sort( sortedTrack, Spot.frameComparator );
+
+			for ( final Spot spot : sortedTrack )
+			{
+				spotTable.incrementCounter();
+				spotTable.addLabel( spot.getName() );
+				spotTable.addValue( "ID", "" + spot.ID() );
+				spotTable.addValue( "TRACK_ID", "" + trackID.intValue() );
+				for ( final String feature : spotFeatures )
+				{
+					final Double val = spot.getFeature( feature );
+					if ( null == val )
+					{
+						spotTable.addValue( feature, "None" );
+					}
+					else
+					{
+						if ( fm.getSpotFeatureIsInt().get( feature ).booleanValue() )
+						{
+							spotTable.addValue( feature, "" + val.intValue() );
+						}
+						else
+						{
+							spotTable.addValue( feature, val.doubleValue() );
+						}
+					}
+				}
+			}
+		}
+		return spotTable;
 	}
 
 	private void writeLog( final String string, final File logFile ) throws IOException
