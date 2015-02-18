@@ -54,6 +54,10 @@ public class OptofluidicsParameters
 
 	private static final int DEFAULT_SMOOTHING_WINDOW = 20;
 
+	private static final String KEY_TRACKER = "tracker";
+
+	private static final String DEFAULT_TRACKER = "lap_tracker";
+
 	static
 	{
 		DEFAULT_PARAMETERS.setProperty( KEY_PARTICLE_DIAMETER, "" + DEFAULT_PARTICLE_DIAMETER );
@@ -65,6 +69,8 @@ public class OptofluidicsParameters
 		DEFAULT_PARAMETERS.setProperty( KEY_MIN_CONSECUTIVE_FRAMES, "" + DEFAULT_MIN_CONSECUTIVE_FRAMES );
 		DEFAULT_PARAMETERS.setProperty( KEY_SMOOTHING_WINDOW, "" + DEFAULT_SMOOTHING_WINDOW );
 		DEFAULT_PARAMETERS.setProperty( KEY_VELOCITY_THRESHOLD, "" + DEFAULT_VELOCITY_THRESHOLD );
+
+		DEFAULT_PARAMETERS.setProperty( KEY_TRACKER, DEFAULT_TRACKER );
 
 	}
 
@@ -87,6 +93,8 @@ public class OptofluidicsParameters
 	private int minConsecutiveFrames;
 
 	private int smoothingWindow;
+
+	private String trackerKey;
 
 	public OptofluidicsParameters( final Logger logger )
 	{
@@ -119,9 +127,12 @@ public class OptofluidicsParameters
 		 * Unwrap
 		 */
 
-		// Tracking
+		// Particle detection
 		this.particleDiameter = readDouble( KEY_PARTICLE_DIAMETER, DEFAULT_PARTICLE_DIAMETER );
 		this.qualityThreshold = readDouble( KEY_QUALITY_THRESHOLD, DEFAULT_QUALITY_THESHOLD );
+
+		// Tracking
+		this.trackerKey = parameters.getProperty( KEY_TRACKER );
 		this.trackInitRadius = readDouble( KEY_TRACK_INIT_RADIUS, DEFAULT_TRACK_INIT_RADIUS );
 		this.trackSearchRadius = readDouble( KEY_TRACK_SEARCH_RADIUS, DEFAULT_TRACK_SEARCH_RADIUS );
 		this.maxFrameGap = readInt( KEY_MAX_FRAME_GAP, DEFAULT_MAX_FRAME_GAP );
@@ -143,11 +154,20 @@ public class OptofluidicsParameters
 
 			output = new FileOutputStream( file );
 
+			// Particle detection
 			parameters.setProperty( KEY_PARTICLE_DIAMETER, "" + particleDiameter );
 			parameters.setProperty( KEY_QUALITY_THRESHOLD, "" + qualityThreshold );
+
+			// Tracking
+			parameters.setProperty( KEY_TRACKER, "" + trackerKey );
 			parameters.setProperty( KEY_TRACK_INIT_RADIUS, "" + trackInitRadius );
 			parameters.setProperty( KEY_TRACK_SEARCH_RADIUS, "" + trackSearchRadius );
 			parameters.setProperty( KEY_MAX_FRAME_GAP, "" + maxFrameGap );
+
+			// Velocity macro analysis.
+			parameters.setProperty( KEY_VELOCITY_THRESHOLD, "" + velocityThreshold );
+			parameters.setProperty( KEY_MIN_CONSECUTIVE_FRAMES, "" + minConsecutiveFrames );
+			parameters.setProperty( KEY_SMOOTHING_WINDOW, "" + smoothingWindow );
 
 			// save properties to project root folder
 			parameters.store( output, COMMENTS );
