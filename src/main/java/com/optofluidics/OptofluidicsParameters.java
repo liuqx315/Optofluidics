@@ -259,6 +259,10 @@ public class OptofluidicsParameters
 		}
 	}
 
+	/*
+	 * Particle detection.
+	 */
+
 	public double getParticleDiameter()
 	{
 		return particleDiameter;
@@ -277,6 +281,20 @@ public class OptofluidicsParameters
 	public void setQualityThreshold( final double qualityThreshold )
 	{
 		this.qualityThreshold = qualityThreshold;
+	}
+
+	/*
+	 * Tracking.
+	 */
+
+	public String getTrackerKey()
+	{
+		return trackerKey;
+	}
+
+	public void setTrackerKey( final String trackerKey )
+	{
+		this.trackerKey = trackerKey;
 	}
 
 	public double getTrackInitRadius()
@@ -307,6 +325,30 @@ public class OptofluidicsParameters
 	public void setMaxFrameGap( final int maxFrameGap )
 	{
 		this.maxFrameGap = maxFrameGap;
+	}
+
+	/*
+	 * Track filtering.
+	 */
+
+	public void setFilterMinNSpots( final int filterMinNSpots )
+	{
+		this.filterMinNSpots = filterMinNSpots;
+	}
+
+	public int getFilterMinNSpots()
+	{
+		return filterMinNSpots;
+	}
+
+	public void setFilterTrackDisplacement( final double filterTrackDisplacement )
+	{
+		this.filterTrackDisplacement = filterTrackDisplacement;
+	}
+
+	public double getFilterTrackDisplacement()
+	{
+		return filterTrackDisplacement;
 	}
 
 	/*
