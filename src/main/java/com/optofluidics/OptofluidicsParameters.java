@@ -8,6 +8,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Field;
 import java.util.Properties;
 
 import fiji.plugin.trackmate.Logger;
@@ -18,11 +19,11 @@ public class OptofluidicsParameters
 
 	public static final String KEY_PARTICLE_DIAMETER = "particle_radius";
 
-	public static final double DEFAULT_PARTICLE_DIAMETER = 3.0;
+	public static final double DEFAULT_PARTICLE_DIAMETER = 10.0;
 
 	public static final String KEY_QUALITY_THRESHOLD = "quality_threshold";
 
-	public static final double DEFAULT_QUALITY_THESHOLD = 5d;
+	public static final double DEFAULT_QUALITY_THESHOLD = 1d;
 
 	public static final String KEY_TRACK_SEARCH_RADIUS = "track_search_radius";
 
@@ -56,7 +57,11 @@ public class OptofluidicsParameters
 
 	private static final String KEY_TRACKER = "tracker";
 
-	private static final String DEFAULT_TRACKER = "lap_tracker";
+	public static final String LAP_TRACKER_KEY = "lap_tracker";
+
+	public static final String LINEAR_MOTION_TRACKER_KEY = "linear_motion_tracker";
+
+	private static final String DEFAULT_TRACKER = LINEAR_MOTION_TRACKER_KEY;
 
 	private static final String KEY_FILTER_MIN_NSPOTS = "min_nspots_per_track";
 
@@ -64,7 +69,21 @@ public class OptofluidicsParameters
 
 	private static final String KEY_FILTER_TRACK_DISPLACEMENT = "min_track_displacement";
 
-	private static final double DEFAULT_FILTER_TRACK_DISPLACEMENT = 30.0;
+	private static final double DEFAULT_FILTER_TRACK_DISPLACEMENT = 5.0;
+
+	private static final String[] FIELDS = new String[] {
+			"particleDiameter",
+			"qualityThreshold",
+			"trackerKey",
+			"trackInitRadius",
+			"trackSearchRadius",
+			"maxFrameGap",
+			"filterMinNSpots",
+			"filterTrackDisplacement",
+			"smoothingWindow",
+			"velocityThreshold",
+			"minConsecutiveFrames"
+			};
 
 	static
 	{
@@ -218,6 +237,41 @@ public class OptofluidicsParameters
 			}
 
 		}
+	}
+
+	@Override
+	public String toString()
+	{
+		final StringBuilder str = new StringBuilder();
+		str.append( "Optofluidics parameters " + super.toString() + ":\n" );
+		for ( final String name : FIELDS )
+		{
+			Field field;
+			try
+			{
+				field = this.getClass().getDeclaredField( name );
+				field.setAccessible( true );
+				final Object value = field.get( this );
+				str.append( String.format( "  - %1$-25s = %2$-15s\n", name, value ) );
+			}
+			catch ( final SecurityException e1 )
+			{
+				e1.printStackTrace();
+			}
+			catch ( final NoSuchFieldException e1 )
+			{
+				e1.printStackTrace();
+			}
+			catch ( final IllegalArgumentException e )
+			{
+				e.printStackTrace();
+			}
+			catch ( final IllegalAccessException e )
+			{
+				e.printStackTrace();
+			}
+		}
+		return str.toString();
 	}
 
 	private double readDouble( final String key, final double defaultValue )
@@ -387,6 +441,6 @@ public class OptofluidicsParameters
 
 	public static void main( final String[] args )
 	{
-		new OptofluidicsParameters( Logger.DEFAULT_LOGGER ).toString();
+		System.out.println( new OptofluidicsParameters( Logger.DEFAULT_LOGGER ).toString() );
 	}
 }
