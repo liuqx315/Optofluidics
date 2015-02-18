@@ -52,7 +52,7 @@ public class OptofluidicsBatchProcessor_ implements PlugIn
 			+ "<code>optifluidics.properties</code> file."
 			+ "</html>";
 
-	private String path;
+	private static String path;
 
 	private LogRecorder logger = new LogRecorder( Logger.DEFAULT_LOGGER );
 
