@@ -58,20 +58,34 @@ public class OptofluidicsParameters
 
 	private static final String DEFAULT_TRACKER = "lap_tracker";
 
+	private static final String KEY_FILTER_MIN_NSPOTS = "min_nspots_per_track";
+
+	private static final int DEFAULT_FILTER_MIN_NSPOTS = 50;
+
+	private static final String KEY_FILTER_TRACK_DISPLACEMENT = "min_track_displacement";
+
+	private static final double DEFAULT_FILTER_TRACK_DISPLACEMENT = 30.0;
+
 	static
 	{
+		// Detection.
 		DEFAULT_PARAMETERS.setProperty( KEY_PARTICLE_DIAMETER, "" + DEFAULT_PARTICLE_DIAMETER );
 		DEFAULT_PARAMETERS.setProperty( KEY_QUALITY_THRESHOLD, "" + DEFAULT_QUALITY_THESHOLD );
+
+		// Tracking.
+		DEFAULT_PARAMETERS.setProperty( KEY_TRACKER, DEFAULT_TRACKER );
 		DEFAULT_PARAMETERS.setProperty( KEY_TRACK_INIT_RADIUS, "" + DEFAULT_TRACK_INIT_RADIUS );
 		DEFAULT_PARAMETERS.setProperty( KEY_TRACK_SEARCH_RADIUS, "" + DEFAULT_TRACK_SEARCH_RADIUS );
 		DEFAULT_PARAMETERS.setProperty( KEY_MAX_FRAME_GAP, "" + DEFAULT_MAX_FRAME_GAP );
 
+		// Track filtering.
+		DEFAULT_PARAMETERS.setProperty( KEY_FILTER_MIN_NSPOTS, "" + DEFAULT_FILTER_MIN_NSPOTS);
+		DEFAULT_PARAMETERS.setProperty( KEY_FILTER_TRACK_DISPLACEMENT, "" + DEFAULT_FILTER_TRACK_DISPLACEMENT );
+
+		// Velocity analysis.
 		DEFAULT_PARAMETERS.setProperty( KEY_MIN_CONSECUTIVE_FRAMES, "" + DEFAULT_MIN_CONSECUTIVE_FRAMES );
 		DEFAULT_PARAMETERS.setProperty( KEY_SMOOTHING_WINDOW, "" + DEFAULT_SMOOTHING_WINDOW );
 		DEFAULT_PARAMETERS.setProperty( KEY_VELOCITY_THRESHOLD, "" + DEFAULT_VELOCITY_THRESHOLD );
-
-		DEFAULT_PARAMETERS.setProperty( KEY_TRACKER, DEFAULT_TRACKER );
-
 	}
 
 	protected final Properties parameters;
@@ -95,6 +109,10 @@ public class OptofluidicsParameters
 	private int smoothingWindow;
 
 	private String trackerKey;
+
+	private int filterMinNSpots;
+
+	private double filterTrackDisplacement;
 
 	public OptofluidicsParameters( final Logger logger )
 	{
@@ -137,6 +155,10 @@ public class OptofluidicsParameters
 		this.trackSearchRadius = readDouble( KEY_TRACK_SEARCH_RADIUS, DEFAULT_TRACK_SEARCH_RADIUS );
 		this.maxFrameGap = readInt( KEY_MAX_FRAME_GAP, DEFAULT_MAX_FRAME_GAP );
 
+		// Track filtering.
+		this.filterMinNSpots = readInt( KEY_FILTER_MIN_NSPOTS, DEFAULT_FILTER_MIN_NSPOTS );
+		this.filterTrackDisplacement = readDouble( KEY_FILTER_TRACK_DISPLACEMENT, DEFAULT_FILTER_TRACK_DISPLACEMENT );
+
 		// Velocity macro analysis
 		this.velocityThreshold = readDouble( KEY_VELOCITY_THRESHOLD, DEFAULT_VELOCITY_THRESHOLD );
 		this.minConsecutiveFrames = readInt( KEY_MIN_CONSECUTIVE_FRAMES, DEFAULT_MIN_CONSECUTIVE_FRAMES );
@@ -154,22 +176,26 @@ public class OptofluidicsParameters
 
 			output = new FileOutputStream( file );
 
-			// Particle detection
+			// Particle detection.
 			parameters.setProperty( KEY_PARTICLE_DIAMETER, "" + particleDiameter );
 			parameters.setProperty( KEY_QUALITY_THRESHOLD, "" + qualityThreshold );
 
-			// Tracking
+			// Tracking.
 			parameters.setProperty( KEY_TRACKER, "" + trackerKey );
 			parameters.setProperty( KEY_TRACK_INIT_RADIUS, "" + trackInitRadius );
 			parameters.setProperty( KEY_TRACK_SEARCH_RADIUS, "" + trackSearchRadius );
 			parameters.setProperty( KEY_MAX_FRAME_GAP, "" + maxFrameGap );
+
+			// Track filtering.
+			parameters.setProperty( KEY_FILTER_MIN_NSPOTS, "" + filterMinNSpots );
+			parameters.setProperty( KEY_FILTER_TRACK_DISPLACEMENT, "" + filterTrackDisplacement );
 
 			// Velocity macro analysis.
 			parameters.setProperty( KEY_VELOCITY_THRESHOLD, "" + velocityThreshold );
 			parameters.setProperty( KEY_MIN_CONSECUTIVE_FRAMES, "" + minConsecutiveFrames );
 			parameters.setProperty( KEY_SMOOTHING_WINDOW, "" + smoothingWindow );
 
-			// save properties to project root folder
+			// Save properties to project root folder.
 			parameters.store( output, COMMENTS );
 
 		}
