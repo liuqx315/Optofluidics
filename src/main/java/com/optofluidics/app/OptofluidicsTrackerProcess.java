@@ -6,6 +6,7 @@ import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.detection.DetectorKeys;
 import fiji.plugin.trackmate.detection.LogDetectorFactory;
+import fiji.plugin.trackmate.features.FeatureFilter;
 import fiji.plugin.trackmate.features.edges.EdgeTargetAnalyzer;
 import fiji.plugin.trackmate.features.edges.EdgeTimeLocationAnalyzer;
 import fiji.plugin.trackmate.features.edges.EdgeVelocityAnalyzer;
@@ -16,6 +17,7 @@ import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
 import fiji.plugin.trackmate.features.track.TrackSpeedStatisticsAnalyzer;
 import fiji.plugin.trackmate.tracking.TrackerKeys;
 import fiji.plugin.trackmate.tracking.kalman.KalmanTrackerFactory;
+import fiji.plugin.trackmate.tracking.oldlap.SimpleLAPTrackerFactory;
 import ij.ImagePlus;
 
 import java.util.Map;
@@ -112,18 +114,36 @@ public class OptofluidicsTrackerProcess implements MultiThreaded, Algorithm
 		 * 5. Tracking.
 		 */
 
-		settings.trackerFactory = new KalmanTrackerFactory();
-		final Map< String, Object > trackerSettings = settings.trackerFactory.getDefaultSettings();
-		trackerSettings.put( KalmanTrackerFactory.KEY_KALMAN_SEARCH_RADIUS, parameters.getTrackSearchRadius() );
-		trackerSettings.put( TrackerKeys.KEY_GAP_CLOSING_MAX_FRAME_GAP, parameters.getMaxFrameGap() );
-		trackerSettings.put( TrackerKeys.KEY_LINKING_MAX_DISTANCE, parameters.getTrackInitRadius() );
 
-//		settings.trackerFactory = new SimpleLAPTrackerFactory();
-//		final Map< String, Object > trackerSettings = settings.trackerFactory.getDefaultSettings();
-//		trackerSettings.put( TrackerKeys.KEY_LINKING_MAX_DISTANCE, parameters.getTrackSearchRadius() );
-//		trackerSettings.put( TrackerKeys.KEY_GAP_CLOSING_MAX_FRAME_GAP, parameters.getMaxFrameGap() );
-//		trackerSettings.put( TrackerKeys.KEY_GAP_CLOSING_MAX_DISTANCE, parameters.getTrackInitRadius() );
+		final String trackerKey = parameters.getTrackerKey();
+		final Map< String, Object > trackerSettings;
+		if ( trackerKey.equals( OptofluidicsParameters.LINEAR_MOTION_TRACKER_KEY ) )
+		{
+			settings.trackerFactory = new KalmanTrackerFactory();
+			trackerSettings = settings.trackerFactory.getDefaultSettings();
+			trackerSettings.put( KalmanTrackerFactory.KEY_KALMAN_SEARCH_RADIUS, parameters.getTrackSearchRadius() );
+			trackerSettings.put( TrackerKeys.KEY_GAP_CLOSING_MAX_FRAME_GAP, parameters.getMaxFrameGap() );
+			trackerSettings.put( TrackerKeys.KEY_LINKING_MAX_DISTANCE, parameters.getTrackInitRadius() );
 
+		}
+		else if ( trackerKey.equals( OptofluidicsParameters.LAP_TRACKER_KEY ) )
+		{
+			settings.trackerFactory = new SimpleLAPTrackerFactory();
+			trackerSettings = settings.trackerFactory.getDefaultSettings();
+			trackerSettings.put( TrackerKeys.KEY_LINKING_MAX_DISTANCE, parameters.getTrackSearchRadius() );
+			trackerSettings.put( TrackerKeys.KEY_GAP_CLOSING_MAX_FRAME_GAP, parameters.getMaxFrameGap() );
+			trackerSettings.put( TrackerKeys.KEY_GAP_CLOSING_MAX_DISTANCE, parameters.getTrackInitRadius() );
+
+		}
+		else
+		{
+			logger.error( "Unkown tracker: " + trackerKey + ". Falling back to lap_tracer.\n" );
+			settings.trackerFactory = new SimpleLAPTrackerFactory();
+			trackerSettings = settings.trackerFactory.getDefaultSettings();
+			trackerSettings.put( TrackerKeys.KEY_LINKING_MAX_DISTANCE, parameters.getTrackSearchRadius() );
+			trackerSettings.put( TrackerKeys.KEY_GAP_CLOSING_MAX_FRAME_GAP, parameters.getMaxFrameGap() );
+			trackerSettings.put( TrackerKeys.KEY_GAP_CLOSING_MAX_DISTANCE, parameters.getTrackInitRadius() );
+		}
 		settings.trackerSettings = trackerSettings;
 
 		final long trackingTStart = System.currentTimeMillis();
@@ -139,11 +159,18 @@ public class OptofluidicsTrackerProcess implements MultiThreaded, Algorithm
 		logger.log( "Track building completed in " + trackingTime + " s.\n" );
 
 		/*
-		 * 6. Track features calculation
+		 * 6. Track & edge features calculation
 		 */
 
 		trackmate.computeEdgeFeatures( true );
 		trackmate.computeTrackFeatures( true );
+
+		/*
+		 * Track filtering.
+		 */
+
+		trackmate.execTrackFiltering( true );
+		logger.log( "Kept " + model.getTrackModel().nTracks( true ) + " tracks out of " + model.getTrackModel().nTracks( false ) + ".\n" );
 
 		return true;
 	}
@@ -209,6 +236,15 @@ public class OptofluidicsTrackerProcess implements MultiThreaded, Algorithm
 		settings.addTrackAnalyzer( new TrackLinearVelocityAnalyzer() );
 		settings.addTrackAnalyzer( new TrackSpotIntensityAnalyzer() );
 		settings.addTrackAnalyzer( new TrackPausingAnalyzer() );
+
+		/*
+		 * Track filtering.
+		 */
+
+		final FeatureFilter nSpotsFilter = new FeatureFilter( TrackBranchingAnalyzer.NUMBER_SPOTS, parameters.getFilterMinNSpots(), true );
+		final FeatureFilter trackDisplacementFilter = new FeatureFilter( TrackDurationAnalyzer.TRACK_DISPLACEMENT, parameters.getFilterTrackDisplacement(), true );
+		settings.addTrackFilter( nSpotsFilter );
+		settings.addTrackFilter( trackDisplacementFilter );
 
 		return settings;
 	}
