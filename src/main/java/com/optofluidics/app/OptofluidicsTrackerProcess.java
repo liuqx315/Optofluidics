@@ -17,7 +17,7 @@ import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
 import fiji.plugin.trackmate.features.track.TrackSpeedStatisticsAnalyzer;
 import fiji.plugin.trackmate.tracking.TrackerKeys;
 import fiji.plugin.trackmate.tracking.kalman.KalmanTrackerFactory;
-import fiji.plugin.trackmate.tracking.oldlap.SimpleLAPTrackerFactory;
+import fiji.plugin.trackmate.tracking.sparselap.SimpleSparseLAPTrackerFactory;
 import ij.ImagePlus;
 
 import java.util.Map;
@@ -128,7 +128,7 @@ public class OptofluidicsTrackerProcess implements MultiThreaded, Algorithm
 		}
 		else if ( trackerKey.equals( OptofluidicsParameters.LAP_TRACKER_KEY ) )
 		{
-			settings.trackerFactory = new SimpleLAPTrackerFactory();
+			settings.trackerFactory = new SimpleSparseLAPTrackerFactory();
 			trackerSettings = settings.trackerFactory.getDefaultSettings();
 			trackerSettings.put( TrackerKeys.KEY_LINKING_MAX_DISTANCE, parameters.getTrackSearchRadius() );
 			trackerSettings.put( TrackerKeys.KEY_GAP_CLOSING_MAX_FRAME_GAP, parameters.getMaxFrameGap() );
@@ -137,8 +137,8 @@ public class OptofluidicsTrackerProcess implements MultiThreaded, Algorithm
 		}
 		else
 		{
-			logger.error( "Unkown tracker: " + trackerKey + ". Falling back to lap_tracer.\n" );
-			settings.trackerFactory = new SimpleLAPTrackerFactory();
+			logger.error( "Unkown tracker: " + trackerKey + ". Falling back to lap_tracker.\n" );
+			settings.trackerFactory = new SimpleSparseLAPTrackerFactory();
 			trackerSettings = settings.trackerFactory.getDefaultSettings();
 			trackerSettings.put( TrackerKeys.KEY_LINKING_MAX_DISTANCE, parameters.getTrackSearchRadius() );
 			trackerSettings.put( TrackerKeys.KEY_GAP_CLOSING_MAX_FRAME_GAP, parameters.getMaxFrameGap() );

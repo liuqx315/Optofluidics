@@ -261,7 +261,6 @@ public class OptofluidicsBatchProcessor_ implements PlugIn
 						e2.printStackTrace();
 					}
 					recorder.log( "Exporting spots statistics to " + spotStatsFilePath + " done.\n" );
-					recorder.log( " Done.\n" );
 
 					/*
 					 * Velocity macro analysis.
@@ -428,7 +427,7 @@ public class OptofluidicsBatchProcessor_ implements PlugIn
 	public static void main( final String[] args )
 	{
 		ImageJ.main( args );
-		new OptofluidicsBatchProcessor_().run( "D:/Users/Jean-Yves/Development/Optofluidics/samples/Data" );
+		new OptofluidicsBatchProcessor_().run( "/Users/tinevez/Development/OptoFluidics/Optofluidics/samples/Data" );
 	}
 
 }
