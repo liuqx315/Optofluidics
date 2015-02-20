@@ -13,7 +13,7 @@
 	</parent>
 
 	<groupId>com.optofluidics</groupId>
-  <version>0.0.10-SNAPSHOT</version>
+  <version>0.0.10</version>
 	<name>plugins/Optofuidics_.jar</name>
 	
 	<properties>
@@ -37,7 +37,6 @@
 	<dependency>
 		<groupId>sc.fiji</groupId>
 		<artifactId>TrackMate_</artifactId>
-	<version>2.7.2</version>
 	</dependency>
 	<dependency>
 			<groupId>net.imglib2</groupId>
@@ -76,22 +75,6 @@
 				<directory>${project.build.testSourceDirectory}</directory>
 			</testResource>
 		</testResources>
-		<plugins>
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>exec-maven-plugin</artifactId>
-				<executions>
-					<execution>
-						<goals>
-							<goal>java</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-					<mainClass>Process_Pixels</mainClass>
-				</configuration>
-			</plugin>
-		</plugins>
 	</build>
 
 	<developers>
