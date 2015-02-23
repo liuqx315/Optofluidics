@@ -187,7 +187,11 @@ public class OptofluidicsParameters
 	public void write()
 	{
 		OutputStream output = null;
-		final String fijiDir = IJ.getDirectory( "imagej" );
+		String fijiDir = IJ.getDirectory( "imagej" );
+		if ( null == fijiDir || !( new File( fijiDir ).exists() ) )
+		{
+			fijiDir = System.getProperty( "user.home" );
+		}
 		final File file = new File( fijiDir, PROPERTIES_FILE );
 
 		try
