@@ -1,7 +1,10 @@
 package com.optofluidics.app;
 
+import fiji.plugin.trackmate.Logger;
+import ij.ImageJ;
+import ij.plugin.PlugIn;
+
 import java.awt.Color;
-import java.awt.EventQueue;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -24,9 +27,7 @@ import com.optofluidics.Main;
 import com.optofluidics.OptofluidicsParameters;
 import com.optofluidics.util.OptofluidicsUtil;
 
-import fiji.plugin.trackmate.Logger;
-
-public class OptofluidicsParametersEditorFrame extends JFrame
+public class OptofluidicsParametersEditorFrame extends JFrame implements PlugIn
 {
 	private static final long serialVersionUID = 1L;
 
@@ -435,27 +436,20 @@ public class OptofluidicsParametersEditorFrame extends JFrame
 
 	}
 
+	@Override
+	public void run( final String arg )
+	{
+		setVisible( true );
+	}
+
 	/*
 	 * MAIN METHOD
 	 */
 
 	public static void main( final String[] args )
 	{
-		EventQueue.invokeLater( new Runnable()
-		{
-			@Override
-			public void run()
-			{
-				try
-				{
-					final OptofluidicsParametersEditorFrame frame = new OptofluidicsParametersEditorFrame();
-					frame.setVisible( true );
-				}
-				catch ( final Exception e )
-				{
-					e.printStackTrace();
-				}
-			}
-		} );
+		ImageJ.main( args );
+		new OptofluidicsParametersEditorFrame().run( "" );
 	}
+
 }
