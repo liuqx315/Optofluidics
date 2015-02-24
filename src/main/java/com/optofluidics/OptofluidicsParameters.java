@@ -9,9 +9,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Field;
+import java.util.Map;
 import java.util.Properties;
 
 import fiji.plugin.trackmate.Logger;
+import fiji.plugin.trackmate.tracking.SpotTrackerFactory;
+import fiji.plugin.trackmate.tracking.TrackerKeys;
+import fiji.plugin.trackmate.tracking.kalman.KalmanTrackerFactory;
+import fiji.plugin.trackmate.tracking.sparselap.SimpleSparseLAPTrackerFactory;
 
 public class OptofluidicsParameters
 {
@@ -57,9 +62,9 @@ public class OptofluidicsParameters
 
 	private static final String KEY_TRACKER = "tracker";
 
-	public static final String LAP_TRACKER_KEY = "lap_tracker";
+	private static final String LAP_TRACKER_KEY = "lap_tracker";
 
-	public static final String LINEAR_MOTION_TRACKER_KEY = "linear_motion_tracker";
+	private static final String LINEAR_MOTION_TRACKER_KEY = "linear_motion_tracker";
 
 	private static final String DEFAULT_TRACKER = LINEAR_MOTION_TRACKER_KEY;
 
@@ -127,7 +132,7 @@ public class OptofluidicsParameters
 
 	private int smoothingWindow;
 
-	private String trackerKey;
+	private TrackerChoice trackerChoice;
 
 	private int filterMinNSpots;
 
@@ -140,7 +145,7 @@ public class OptofluidicsParameters
 		load();
 	}
 
-	private void load()
+	public void load()
 	{
 		final String fijiDir = IJ.getDirectory( "imagej" );
 		File file = new File( fijiDir, PROPERTIES_FILE );
@@ -154,6 +159,7 @@ public class OptofluidicsParameters
 			}
 			final InputStream stream = new FileInputStream( file );
 			parameters.load( stream );
+			logger.log( "Loaded parameters from file " + file + ".\n" );
 		}
 		catch ( final Exception e )
 		{
@@ -169,7 +175,7 @@ public class OptofluidicsParameters
 		this.qualityThreshold = readDouble( KEY_QUALITY_THRESHOLD, DEFAULT_QUALITY_THESHOLD );
 
 		// Tracking
-		this.trackerKey = parameters.getProperty( KEY_TRACKER );
+		this.trackerChoice = TrackerChoice.fromName( parameters.getProperty( KEY_TRACKER ) );
 		this.trackInitRadius = readDouble( KEY_TRACK_INIT_RADIUS, DEFAULT_TRACK_INIT_RADIUS );
 		this.trackSearchRadius = readDouble( KEY_TRACK_SEARCH_RADIUS, DEFAULT_TRACK_SEARCH_RADIUS );
 		this.maxFrameGap = readInt( KEY_MAX_FRAME_GAP, DEFAULT_MAX_FRAME_GAP );
@@ -204,7 +210,7 @@ public class OptofluidicsParameters
 			parameters.setProperty( KEY_QUALITY_THRESHOLD, "" + qualityThreshold );
 
 			// Tracking.
-			parameters.setProperty( KEY_TRACKER, "" + trackerKey );
+			parameters.setProperty( KEY_TRACKER, trackerChoice.toString() );
 			parameters.setProperty( KEY_TRACK_INIT_RADIUS, "" + trackInitRadius );
 			parameters.setProperty( KEY_TRACK_SEARCH_RADIUS, "" + trackSearchRadius );
 			parameters.setProperty( KEY_MAX_FRAME_GAP, "" + maxFrameGap );
@@ -221,6 +227,7 @@ public class OptofluidicsParameters
 			// Save properties to project root folder.
 			parameters.store( output, COMMENTS );
 
+			logger.log( "Saved parameters to file " + file + ".\n" );
 		}
 		catch ( final IOException io )
 		{
@@ -345,14 +352,14 @@ public class OptofluidicsParameters
 	 * Tracking.
 	 */
 
-	public String getTrackerKey()
+	public TrackerChoice getTrackerChoice()
 	{
-		return trackerKey;
+		return trackerChoice;
 	}
 
-	public void setTrackerKey( final String trackerKey )
+	public void setTrackerChoice( final TrackerChoice trackerChoice )
 	{
-		this.trackerKey = trackerKey;
+		this.trackerChoice = trackerChoice;
 	}
 
 	public double getTrackInitRadius()
@@ -442,6 +449,84 @@ public class OptofluidicsParameters
 	{
 		this.smoothingWindow = smoothingWindow;
 	}
+
+	/*
+	 * INNER CLASSES.
+	 */
+
+	public static enum TrackerChoice
+	{
+		LAP_TRACKER( OptofluidicsParameters.LAP_TRACKER_KEY ),
+		LINEAR_MOTION_TRACKER( OptofluidicsParameters.LINEAR_MOTION_TRACKER_KEY );
+
+		private String name;
+
+		private TrackerChoice( final String name )
+		{
+			this.name = name;
+		}
+
+		@Override
+		public String toString()
+		{
+			return name;
+		}
+
+		public static TrackerChoice fromName( final String name )
+		{
+			for ( final TrackerChoice el : values() )
+			{
+				if ( el.toString().equalsIgnoreCase( name ) ) { return el; }
+			}
+			return LAP_TRACKER;
+		}
+
+		public static TrackerChoice fromFactoryKey( final String factoryKey )
+		{
+			for ( final TrackerChoice el : values() )
+			{
+				if ( el.getFactory().getKey().equals( factoryKey ) ) { return el; }
+			}
+			return LAP_TRACKER;
+		}
+
+		public SpotTrackerFactory getFactory()
+		{
+			switch ( this )
+			{
+			case LINEAR_MOTION_TRACKER:
+				return new KalmanTrackerFactory();
+			default:
+			case LAP_TRACKER:
+				return new SimpleSparseLAPTrackerFactory();
+
+			}
+		}
+
+		public Map< String, Object > getTrackerSettingsFrom( final OptofluidicsParameters parameters )
+		{
+			final Map< String, Object > trackerSettings = this.getFactory().getDefaultSettings();
+			switch ( this )
+			{
+			case LINEAR_MOTION_TRACKER:
+				trackerSettings.put( KalmanTrackerFactory.KEY_KALMAN_SEARCH_RADIUS, parameters.getTrackSearchRadius() );
+				trackerSettings.put( TrackerKeys.KEY_GAP_CLOSING_MAX_FRAME_GAP, parameters.getMaxFrameGap() );
+				trackerSettings.put( TrackerKeys.KEY_LINKING_MAX_DISTANCE, parameters.getTrackInitRadius() );
+				break;
+			default:
+			case LAP_TRACKER:
+				trackerSettings.put( TrackerKeys.KEY_LINKING_MAX_DISTANCE, parameters.getTrackSearchRadius() );
+				trackerSettings.put( TrackerKeys.KEY_GAP_CLOSING_MAX_FRAME_GAP, parameters.getMaxFrameGap() );
+				trackerSettings.put( TrackerKeys.KEY_GAP_CLOSING_MAX_DISTANCE, parameters.getTrackInitRadius() );
+				break;
+			}
+			return trackerSettings;
+		}
+	}
+
+	/*
+	 * MAIN METHOD.
+	 */
 
 	public static void main( final String[] args )
 	{

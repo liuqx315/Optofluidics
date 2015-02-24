@@ -5,6 +5,7 @@ import ij.ImageJ;
 import ij.plugin.PlugIn;
 
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -23,8 +24,11 @@ import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 
+import org.eclipse.wb.swing.FocusTraversalOnArray;
+
 import com.optofluidics.Main;
 import com.optofluidics.OptofluidicsParameters;
+import com.optofluidics.OptofluidicsParameters.TrackerChoice;
 import com.optofluidics.util.OptofluidicsUtil;
 
 public class OptofluidicsParametersEditorFrame extends JFrame implements PlugIn
@@ -67,6 +71,8 @@ public class OptofluidicsParametersEditorFrame extends JFrame implements PlugIn
 
 	private JFormattedTextField tftSmoothingWindow;
 
+	private final OptofluidicsParameters parameters;
+
 	/*
 	 * CONSTRUCTOR
 	 */
@@ -74,11 +80,12 @@ public class OptofluidicsParametersEditorFrame extends JFrame implements PlugIn
 
 	public OptofluidicsParametersEditorFrame()
 	{
+		this.parameters = new OptofluidicsParameters( Logger.IJ_LOGGER );
 		OptofluidicsUtil.setSystemLookAndFeel();
 		setIconImage( Main.OPTOFLUIDICS_LARGE_ICON.getImage() );
 		setTitle( "Optofluidics parameters editor " + Main.OPTOFLUIDICS_LIB_VERSION );
 		setupGUI();
-		reload();
+		updateGUI();
 	}
 
 	/*
@@ -87,14 +94,12 @@ public class OptofluidicsParametersEditorFrame extends JFrame implements PlugIn
 
 	private void save()
 	{
-		final OptofluidicsParameters parameters = new OptofluidicsParameters( Logger.VOID_LOGGER );
-
 		// Detection.
 		parameters.setParticleDiameter( ( ( Number ) ftfParticleSize.getValue() ).doubleValue() );
 		parameters.setQualityThreshold( ( ( Number ) ftfQualityThreshold.getValue() ).doubleValue() );
 
 		// Tracking.
-		parameters.setTrackerKey( comboBoxTracker.getSelectedItem().toString() );
+		parameters.setTrackerChoice( ( ( TrackerChoice ) comboBoxTracker.getSelectedItem() ) );
 		parameters.setTrackInitRadius( ( ( Number ) tftInitialRadius.getValue() ).doubleValue() );
 		parameters.setTrackSearchRadius( ( ( Number ) tftSearchRadius.getValue() ).doubleValue() );
 
@@ -113,14 +118,18 @@ public class OptofluidicsParametersEditorFrame extends JFrame implements PlugIn
 
 	private void reload()
 	{
-		final OptofluidicsParameters parameters = new OptofluidicsParameters( Logger.IJ_LOGGER );
+		parameters.load();
+		updateGUI();
+	}
 
+	private void updateGUI()
+	{
 		// Detection.
 		ftfParticleSize.setValue( Double.valueOf( parameters.getParticleDiameter() ) );
 		ftfQualityThreshold.setValue( Double.valueOf( parameters.getQualityThreshold() ) );
 
 		// Tracking.
-		comboBoxTracker.setSelectedItem( TrackerChoice.fromName( parameters.getTrackerKey() ) );
+		comboBoxTracker.setSelectedItem( parameters.getTrackerChoice() );
 		tftInitialRadius.setValue( Double.valueOf( parameters.getTrackInitRadius() ) );
 		tftSearchRadius.setValue( Double.valueOf( parameters.getTrackSearchRadius() ) );
 		tftMaxFrameGap.setValue( Integer.valueOf( parameters.getMaxFrameGap() ) );
@@ -140,7 +149,7 @@ public class OptofluidicsParametersEditorFrame extends JFrame implements PlugIn
 	{
 		final PropertyChangeListener positiveChecker = new PositiveCheckPropertyListener();
 
-		setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
+		setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
 		setBounds( 100, 100, 597, 348 );
 		setResizable( false );
 
@@ -151,10 +160,9 @@ public class OptofluidicsParametersEditorFrame extends JFrame implements PlugIn
 		setContentPane( mainPanel );
 
 		final JButton btnReloadFromFile = new JButton( "Reload from file", RELOAD_ICON );
-		btnReloadFromFile.setBounds( 15, 275, 127, 25 );
+		btnReloadFromFile.setBounds( 15, 275, 127, 32 );
 		btnReloadFromFile.addActionListener( new ActionListener()
 		{
-
 			@Override
 			public void actionPerformed( final ActionEvent e )
 			{
@@ -163,10 +171,9 @@ public class OptofluidicsParametersEditorFrame extends JFrame implements PlugIn
 		} );
 
 		final JButton btnSaveToFile = new JButton( "Save to file", SAVE_ICON );
-		btnSaveToFile.setBounds( 466, 275, 107, 25 );
+		btnSaveToFile.setBounds( 466, 275, 107, 32 );
 		btnSaveToFile.addActionListener( new ActionListener()
 		{
-
 			@Override
 			public void actionPerformed( final ActionEvent e )
 			{
@@ -175,10 +182,9 @@ public class OptofluidicsParametersEditorFrame extends JFrame implements PlugIn
 		} );
 
 		final JButton btnCancel = new JButton( "Cancel", CANCEL_ICON );
-		btnCancel.setBounds( 361, 275, 95, 25 );
+		btnCancel.setBounds( 361, 275, 95, 32 );
 		btnCancel.addActionListener( new ActionListener()
 		{
-
 			@Override
 			public void actionPerformed( final ActionEvent e )
 			{
@@ -250,7 +256,7 @@ public class OptofluidicsParametersEditorFrame extends JFrame implements PlugIn
 
 		comboBoxTracker = new JComboBox( TrackerChoice.values() );
 		comboBoxTracker.setFont( MAIN_FONT );
-		comboBoxTracker.setBounds( 126, 29, 140, 20 );
+		comboBoxTracker.setBounds( 100, 26, 160, 26 );
 		trackingPanel.add( comboBoxTracker );
 
 
@@ -379,7 +385,12 @@ public class OptofluidicsParametersEditorFrame extends JFrame implements PlugIn
 		mainPanel.add( btnSaveToFile );
 		mainPanel.add( trackingPanel );
 		mainPanel.add( detectionPanel );
-
+		setFocusTraversalPolicy( new FocusTraversalOnArray( new Component[] {
+				ftfParticleSize, ftfQualityThreshold,
+				comboBoxTracker, tftInitialRadius, tftSearchRadius, tftMaxFrameGap,
+				tftFilterNSpots, tftFilterTrackDisplacement,
+				tftSmoothingWindow, tftVelocityThreshold, tftMinConsFrames,
+				btnSaveToFile, btnReloadFromFile, btnCancel } ) );
 	}
 
 	/*
@@ -407,34 +418,7 @@ public class OptofluidicsParametersEditorFrame extends JFrame implements PlugIn
 		}
 	}
 
-	private static enum TrackerChoice
-	{
-		LAP_TRACKER( OptofluidicsParameters.LAP_TRACKER_KEY ),
-		LINEAR_MOTION_TRACKER( OptofluidicsParameters.LINEAR_MOTION_TRACKER_KEY );
 
-		private String name;
-
-		private TrackerChoice( final String name )
-		{
-			this.name = name;
-		}
-
-		@Override
-		public String toString()
-		{
-			return name;
-		}
-
-		public static TrackerChoice fromName( final String name )
-		{
-			for ( final TrackerChoice el : values() )
-			{
-				if ( el.toString().equalsIgnoreCase( name ) ) { return el; }
-			}
-			return LAP_TRACKER;
-		}
-
-	}
 
 	@Override
 	public void run( final String arg )

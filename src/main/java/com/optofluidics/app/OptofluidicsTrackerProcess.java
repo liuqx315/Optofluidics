@@ -15,9 +15,6 @@ import fiji.plugin.trackmate.features.track.TrackBranchingAnalyzer;
 import fiji.plugin.trackmate.features.track.TrackDurationAnalyzer;
 import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
 import fiji.plugin.trackmate.features.track.TrackSpeedStatisticsAnalyzer;
-import fiji.plugin.trackmate.tracking.TrackerKeys;
-import fiji.plugin.trackmate.tracking.kalman.KalmanTrackerFactory;
-import fiji.plugin.trackmate.tracking.sparselap.SimpleSparseLAPTrackerFactory;
 import ij.ImagePlus;
 
 import java.util.Map;
@@ -26,6 +23,7 @@ import net.imglib2.algorithm.Algorithm;
 import net.imglib2.algorithm.MultiThreaded;
 
 import com.optofluidics.OptofluidicsParameters;
+import com.optofluidics.OptofluidicsParameters.TrackerChoice;
 import com.optofluidics.trackmate.features.manual.EdgeSmoothedVelocityAnalyzer;
 import com.optofluidics.trackmate.features.manual.MotionTypeEdgeAnalyzer;
 import com.optofluidics.trackmate.features.manual.TrackPausingAnalyzer;
@@ -114,37 +112,9 @@ public class OptofluidicsTrackerProcess implements MultiThreaded, Algorithm
 		 * 5. Tracking.
 		 */
 
-
-		final String trackerKey = parameters.getTrackerKey();
-		final Map< String, Object > trackerSettings;
-		if ( trackerKey.equals( OptofluidicsParameters.LINEAR_MOTION_TRACKER_KEY ) )
-		{
-			settings.trackerFactory = new KalmanTrackerFactory();
-			trackerSettings = settings.trackerFactory.getDefaultSettings();
-			trackerSettings.put( KalmanTrackerFactory.KEY_KALMAN_SEARCH_RADIUS, parameters.getTrackSearchRadius() );
-			trackerSettings.put( TrackerKeys.KEY_GAP_CLOSING_MAX_FRAME_GAP, parameters.getMaxFrameGap() );
-			trackerSettings.put( TrackerKeys.KEY_LINKING_MAX_DISTANCE, parameters.getTrackInitRadius() );
-
-		}
-		else if ( trackerKey.equals( OptofluidicsParameters.LAP_TRACKER_KEY ) )
-		{
-			settings.trackerFactory = new SimpleSparseLAPTrackerFactory();
-			trackerSettings = settings.trackerFactory.getDefaultSettings();
-			trackerSettings.put( TrackerKeys.KEY_LINKING_MAX_DISTANCE, parameters.getTrackSearchRadius() );
-			trackerSettings.put( TrackerKeys.KEY_GAP_CLOSING_MAX_FRAME_GAP, parameters.getMaxFrameGap() );
-			trackerSettings.put( TrackerKeys.KEY_GAP_CLOSING_MAX_DISTANCE, parameters.getTrackInitRadius() );
-
-		}
-		else
-		{
-			logger.error( "Unkown tracker: " + trackerKey + ". Falling back to lap_tracker.\n" );
-			settings.trackerFactory = new SimpleSparseLAPTrackerFactory();
-			trackerSettings = settings.trackerFactory.getDefaultSettings();
-			trackerSettings.put( TrackerKeys.KEY_LINKING_MAX_DISTANCE, parameters.getTrackSearchRadius() );
-			trackerSettings.put( TrackerKeys.KEY_GAP_CLOSING_MAX_FRAME_GAP, parameters.getMaxFrameGap() );
-			trackerSettings.put( TrackerKeys.KEY_GAP_CLOSING_MAX_DISTANCE, parameters.getTrackInitRadius() );
-		}
-		settings.trackerSettings = trackerSettings;
+		final TrackerChoice trackerChoice = parameters.getTrackerChoice();
+		settings.trackerFactory = trackerChoice.getFactory();
+		settings.trackerSettings = trackerChoice.getTrackerSettingsFrom( parameters );
 
 		final long trackingTStart = System.currentTimeMillis();
 		final boolean trackingOK = trackmate.execTracking();
