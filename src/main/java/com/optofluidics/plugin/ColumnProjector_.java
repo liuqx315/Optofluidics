@@ -1,4 +1,4 @@
-package com.optofluidics.spectrumplayer;
+package com.optofluidics.plugin;
 
 import fiji.plugin.trackmate.TrackMatePlugIn_;
 import ij.IJ;
