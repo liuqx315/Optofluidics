@@ -79,7 +79,7 @@ public class OptofluidicsParameters
 	private static final String[] FIELDS = new String[] {
 			"particleDiameter",
 			"qualityThreshold",
-			"trackerKey",
+			"trackerChoice",
 			"trackInitRadius",
 			"trackSearchRadius",
 			"maxFrameGap",
