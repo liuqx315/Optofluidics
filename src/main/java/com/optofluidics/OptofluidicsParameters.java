@@ -145,17 +145,17 @@ public class OptofluidicsParameters
 		load();
 	}
 
-	public void load()
+	public void load( final String parametersSetName )
 	{
 		final String fijiDir = IJ.getDirectory( "imagej" );
-		File file = new File( fijiDir, PROPERTIES_FILE );
+		File file = new File( fijiDir, parametersSetName );
 
 		try
 		{
 			if ( !file.exists() )
 			{
 				// Look in build folder.
-				file = new File( Main.class.getResource( "../../../" + PROPERTIES_FILE ).getPath() );
+				file = new File( Main.class.getResource( "../../../" + parametersSetName ).getPath() );
 			}
 			final InputStream stream = new FileInputStream( file );
 			parameters.load( stream );
@@ -163,7 +163,7 @@ public class OptofluidicsParameters
 		}
 		catch ( final Exception e )
 		{
-			logger.log( "Could not find the " + PROPERTIES_FILE + " properties file. Using default parameters.\n" );
+			logger.log( "Could not find the " + parametersSetName + " properties file. Using default parameters.\n" );
 		}
 
 		/*
@@ -190,7 +190,12 @@ public class OptofluidicsParameters
 		this.smoothingWindow = readInt( KEY_SMOOTHING_WINDOW, DEFAULT_SMOOTHING_WINDOW );
 	}
 
-	public void write()
+	public void load()
+	{
+		load( PROPERTIES_FILE );
+	}
+
+	public void write( final String parametersSetName )
 	{
 		OutputStream output = null;
 		String fijiDir = IJ.getDirectory( "imagej" );
@@ -198,7 +203,7 @@ public class OptofluidicsParameters
 		{
 			fijiDir = System.getProperty( "user.home" );
 		}
-		final File file = new File( fijiDir, PROPERTIES_FILE );
+		final File file = new File( fijiDir, parametersSetName );
 
 		try
 		{
@@ -248,6 +253,11 @@ public class OptofluidicsParameters
 			}
 
 		}
+	}
+
+	public void write()
+	{
+		write( PROPERTIES_FILE );
 	}
 
 	@Override
