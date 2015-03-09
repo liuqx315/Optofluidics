@@ -138,14 +138,32 @@ public class OptofluidicsParameters
 
 	private double filterTrackDisplacement;
 
-	public OptofluidicsParameters( final Logger logger )
+	private final String parametersSetName;
+
+	/*
+	 * CONSTRUCTOR
+	 */
+
+	public OptofluidicsParameters( final Logger logger, final String parametersSetName )
 	{
 		this.logger = logger;
+		if ( parametersSetName == null )
+		{
+			this.parametersSetName = PROPERTIES_FILE;
+		}
+		else
+		{
+			this.parametersSetName = parametersSetName;
+		}
 		this.parameters = new Properties( DEFAULT_PARAMETERS );
 		load();
 	}
 
-	public void load( final String parametersSetName )
+	/*
+	 * METHODS
+	 */
+
+	public void load()
 	{
 		final String fijiDir = IJ.getDirectory( "imagej" );
 		File file = new File( fijiDir, parametersSetName );
@@ -190,12 +208,7 @@ public class OptofluidicsParameters
 		this.smoothingWindow = readInt( KEY_SMOOTHING_WINDOW, DEFAULT_SMOOTHING_WINDOW );
 	}
 
-	public void load()
-	{
-		load( PROPERTIES_FILE );
-	}
-
-	public void write( final String parametersSetName )
+	public void write()
 	{
 		OutputStream output = null;
 		String fijiDir = IJ.getDirectory( "imagej" );
@@ -253,11 +266,6 @@ public class OptofluidicsParameters
 			}
 
 		}
-	}
-
-	public void write()
-	{
-		write( PROPERTIES_FILE );
 	}
 
 	@Override
@@ -540,6 +548,6 @@ public class OptofluidicsParameters
 
 	public static void main( final String[] args )
 	{
-		System.out.println( new OptofluidicsParameters( Logger.DEFAULT_LOGGER ).toString() );
+		System.out.println( new OptofluidicsParameters( Logger.DEFAULT_LOGGER, null ).toString() );
 	}
 }

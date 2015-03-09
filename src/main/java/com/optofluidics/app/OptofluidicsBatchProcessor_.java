@@ -14,6 +14,7 @@ import fiji.plugin.trackmate.gui.TrackMateGUIModel;
 import fiji.plugin.trackmate.gui.descriptors.ConfigureViewsDescriptor;
 import fiji.plugin.trackmate.io.TmXmlWriter;
 import fiji.plugin.trackmate.visualization.ViewFactory;
+import fiji.util.SplitString;
 import fiji.util.gui.GenericDialogPlus;
 import ij.ImageJ;
 import ij.ImagePlus;
@@ -26,11 +27,13 @@ import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.jdom2.Element;
@@ -61,10 +64,36 @@ public class OptofluidicsBatchProcessor_ implements PlugIn
 
 	private LogRecorder logger = new LogRecorder( Logger.DEFAULT_LOGGER );
 
+	/**
+	 * @param arg
+	 *            arg string, in the shape of
+	 * 
+	 *            <pre>
+	 * folder=/path/to/master/folder parameters=optofluidics.parameters
+	 * </pre>
+	 */
 	@Override
-	public void run( final String folder )
+	public void run( final String arg )
 	{
 		logger = new LogRecorder( Logger.IJ_LOGGER );
+
+		String folder = null;
+		String parameterSetName = null;
+		if ( null != arg )
+		{
+			try
+			{
+				final Map< String, String > macroOptions = SplitString.splitMacroOptions( arg );
+				folder = macroOptions.get( "folder" );
+				parameterSetName = macroOptions.get( "parameters" );
+			}
+			catch ( final ParseException e )
+			{
+				logger.error( "Could not parse plugin option string: " + e.getMessage() + ".\n" );
+				e.printStackTrace();
+			}
+		}
+
 		if ( null == folder || folder.isEmpty() )
 		{
 			// Use dialog.
@@ -94,10 +123,10 @@ public class OptofluidicsBatchProcessor_ implements PlugIn
 		}
 
 		final File file = new File( path );
-		exec( file );
+		exec( file, parameterSetName );
 	}
 
-	public void exec( final File folder )
+	public void exec( final File folder, final String parameterSetName )
 	{
 		logger.log( "Optofluidics batch processor " + Main.OPTOFLUIDICS_LIB_VERSION + " started on " + new Date() + ".\n" );
 
@@ -105,7 +134,7 @@ public class OptofluidicsBatchProcessor_ implements PlugIn
 		 * Load parameters
 		 */
 
-		final OptofluidicsParameters parameters = new OptofluidicsParameters( logger );
+		final OptofluidicsParameters parameters = new OptofluidicsParameters( logger, parameterSetName );
 		logger.log( "Using tracking parameters:\n" + parameters.toString() );
 		logger.log( "\n" );
 

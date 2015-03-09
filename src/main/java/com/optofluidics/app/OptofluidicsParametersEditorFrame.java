@@ -80,7 +80,7 @@ public class OptofluidicsParametersEditorFrame extends JFrame implements PlugIn
 
 	public OptofluidicsParametersEditorFrame()
 	{
-		this.parameters = new OptofluidicsParameters( Logger.IJ_LOGGER );
+		this.parameters = new OptofluidicsParameters( Logger.IJ_LOGGER, null );
 		OptofluidicsUtil.setSystemLookAndFeel();
 		setIconImage( Main.OPTOFLUIDICS_LARGE_ICON.getImage() );
 		setTitle( "Optofluidics parameters editor " + Main.OPTOFLUIDICS_LIB_VERSION );
