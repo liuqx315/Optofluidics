@@ -71,7 +71,7 @@ public class OptofluidicsTrackerProcess implements MultiThreaded, Algorithm
 
 		logger.log( "Still defects subtraction.\n" );
 		final long sStart = System.currentTimeMillis();
-		StillSubtractor_.subtract( imp, Method.MEDIAN );
+		StillSubtractor_.subtract( imp, Method.MODE );
 		final long sEnd = System.currentTimeMillis();
 		logger.log( "Still defects subtraction done in " + ( sEnd - sStart ) / 1000 + " s.\n" );
 

@@ -18,7 +18,8 @@ public class StillSubtractor_ implements PlugIn
 
 	public static enum Method
 	{
-		MEDIAN;
+		MEDIAN,
+		MODE;
 	}
 
 	@Override
@@ -37,6 +38,9 @@ public class StillSubtractor_ implements PlugIn
 		final ImagePlus p;
 		switch ( method )
 		{
+		case MODE:
+			p = doModeProjection( imp );
+			break;
 		case MEDIAN:
 		default:
 			p = doMedianProjection( imp );
@@ -63,10 +67,38 @@ public class StillSubtractor_ implements PlugIn
 				{
 					final double value = processor.getf( x, y ) - proj.getf( x, y );
 					processor.putPixelValue( x, y, value );
-
 				}
 			}
 		}
+	}
+
+	private static ImagePlus doModeProjection( final ImagePlus imp )
+	{
+		final ImageStack stack = imp.getStack();
+		final int sliceCount = stack.getSize();
+		final ImageProcessor[] slices = new ImageProcessor[ sliceCount ];
+		int index = 0;
+		for ( int slice = 1; slice <= sliceCount; slice++ )
+		{
+			slices[ index++ ] = stack.getProcessor( slice );
+		}
+
+		final ImageProcessor ip2 = slices[ 0 ].duplicate();
+		final float[] values = new float[ sliceCount ];
+		final int width = ip2.getWidth();
+		final int height = ip2.getHeight();
+		for ( int y = 0; y < height; y++ )
+		{
+			for ( int x = 0; x < width; x++ )
+			{
+				for ( int i = 0; i < sliceCount; i++ )
+				{
+					values[ i ] = slices[ i ].getPixelValue( x, y );
+				}
+				ip2.putPixelValue( x, y, mode( values ) );
+			}
+		}
+		return new ImagePlus( "Mode projection", ip2 );
 	}
 
 	/**
@@ -108,6 +140,28 @@ public class StillSubtractor_ implements PlugIn
 		Arrays.sort( a );
 		final int middle = a.length / 2;
 		return a[ middle ];
+	}
+
+	private static final float mode( final float a[] )
+	{
+		float maxValue = 0;
+		int maxCount = 0;
+
+		for ( int i = 0; i < a.length; ++i )
+		{
+			int count = 0;
+			for ( int j = 0; j < a.length; ++j )
+			{
+				if ( a[ j ] == a[ i ] )
+					++count;
+			}
+			if ( count > maxCount )
+			{
+				maxCount = count;
+				maxValue = a[ i ];
+			}
+		}
+		return maxValue;
 	}
 
 	/*
