@@ -71,7 +71,7 @@ public class OptofluidicsParametersEditorFrame extends JFrame implements PlugIn
 
 	private JFormattedTextField tftSmoothingWindow;
 
-	private final OptofluidicsParameters parameters;
+	private OptofluidicsParameters parameters;
 
 	/*
 	 * CONSTRUCTOR
@@ -80,12 +80,10 @@ public class OptofluidicsParametersEditorFrame extends JFrame implements PlugIn
 
 	public OptofluidicsParametersEditorFrame()
 	{
-		this.parameters = new OptofluidicsParameters( Logger.IJ_LOGGER, null );
 		OptofluidicsUtil.setSystemLookAndFeel();
 		setIconImage( Main.OPTOFLUIDICS_LARGE_ICON.getImage() );
 		setTitle( "Optofluidics parameters editor " + Main.OPTOFLUIDICS_LIB_VERSION );
 		setupGUI();
-		updateGUI();
 	}
 
 	/*
@@ -421,8 +419,17 @@ public class OptofluidicsParametersEditorFrame extends JFrame implements PlugIn
 
 
 	@Override
-	public void run( final String arg )
+	public void run( String parametersSetName )
 	{
+		if ( null == parametersSetName || parametersSetName.isEmpty() )
+		{
+			final OptofluidicsParametersChooser chooser = new OptofluidicsParametersChooser();
+			parametersSetName = chooser.getUserChoice();
+			if ( !chooser.wasOKed() ) { return; }
+		}
+
+		parameters = new OptofluidicsParameters( Logger.IJ_LOGGER, parametersSetName );
+		updateGUI();
 		setVisible( true );
 	}
 
@@ -433,7 +440,7 @@ public class OptofluidicsParametersEditorFrame extends JFrame implements PlugIn
 	public static void main( final String[] args )
 	{
 		ImageJ.main( args );
-		new OptofluidicsParametersEditorFrame().run( "" );
+		new OptofluidicsParametersEditorFrame().run( null );
 	}
 
 }
