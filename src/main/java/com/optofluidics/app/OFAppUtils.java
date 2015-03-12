@@ -60,6 +60,24 @@ public class OFAppUtils
 		}
 	};
 
+	/**
+	 * Returns the list of tracking parameter set files that can be found in the
+	 * fiji folder.
+	 * <p>
+	 * To be accepted as an Optofluidics parameter set, the specified file must:
+	 * <ol>
+	 * <li>be a file and not a directory.
+	 * <li>have a file name that ends in '.properties'.
+	 * <li>be present and readable.
+	 * <li>be a properties file that can be read by the {@link Properties}
+	 * class.
+	 * <li>have a property called
+	 * {@value OptofluidicsParameters#KEY_OPTOFLUIDICS_PARAMETERS} with a value
+	 * equals to <code>true</code>.
+	 * </ol>
+	 * 
+	 * @return a new String array containing the list of parameter set files.
+	 */
 	public static final String[] getParameterSetList()
 	{
 		final File fijiDir = new File( IJ.getDirectory( "imagej" ) );
@@ -70,6 +88,36 @@ public class OFAppUtils
 			names[ i ] = files[ i ].getName();
 		}
 		return names;
+	}
+
+	public static final String wordWrap( final String input, final int width )
+	{
+		final StringBuilder sb = new StringBuilder( input );
+		int i = 0;
+		while ( i + width < sb.length() && ( i = sb.lastIndexOf( " ", i + width ) ) != -1 )
+		{
+			sb.replace( i, i + 1, "\n" );
+		}
+		return sb.toString();
+	}
+
+	public static final String getCommentsForParameterSet( final String parameterSetName )
+	{
+		final File tempFile = new File( IJ.getDirectory( "imagej" ), parameterSetName );
+		final Properties temp = new Properties();
+		try
+		{
+			final InputStream teampStream = new FileInputStream( tempFile );
+			temp.load( teampStream );
+		}
+		catch ( final IOException e )
+		{
+			e.printStackTrace();
+			return "";
+		}
+		final String comments = temp.getProperty( "comments" );
+		if ( null == comments ) { return ""; }
+		return comments;
 	}
 
 	private OFAppUtils()
