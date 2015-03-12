@@ -21,6 +21,7 @@ import javax.swing.JFormattedTextField;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JTextArea;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 
@@ -44,6 +45,10 @@ public class OptofluidicsParametersEditorFrame extends JFrame implements PlugIn
 	private static final Font MAIN_FONT = new Font( "Calibri", Font.PLAIN, 11 );
 
 	private static final Font BOLD_FONT = new Font( "Calibri", Font.BOLD, 12 );
+
+	private static final Font BIG_FONT = new Font( "Calibri", Font.PLAIN, 12 );
+
+	private static final Font BIG_BOLD_FONT = new Font( "Calibri", Font.BOLD, 13 );
 
 	private static final NumberFormat DECIMAL_FORMAT = NumberFormat.getNumberInstance();
 
@@ -73,6 +78,10 @@ public class OptofluidicsParametersEditorFrame extends JFrame implements PlugIn
 
 	private OptofluidicsParameters parameters;
 
+	private JTextArea commentsTextArea;
+
+	private JComboBox parameterSetsComboBox;
+
 	/*
 	 * CONSTRUCTOR
 	 */
@@ -92,6 +101,9 @@ public class OptofluidicsParametersEditorFrame extends JFrame implements PlugIn
 
 	private void save()
 	{
+		// Comments
+		parameters.setComments( commentsTextArea.getText() );
+
 		// Detection.
 		parameters.setParticleDiameter( ( ( Number ) ftfParticleSize.getValue() ).doubleValue() );
 		parameters.setQualityThreshold( ( ( Number ) ftfQualityThreshold.getValue() ).doubleValue() );
@@ -122,6 +134,9 @@ public class OptofluidicsParametersEditorFrame extends JFrame implements PlugIn
 
 	private void updateGUI()
 	{
+		// Title and comments
+		commentsTextArea.setText( parameters.getComments() );
+
 		// Detection.
 		ftfParticleSize.setValue( Double.valueOf( parameters.getParticleDiameter() ) );
 		ftfQualityThreshold.setValue( Double.valueOf( parameters.getQualityThreshold() ) );
@@ -148,7 +163,7 @@ public class OptofluidicsParametersEditorFrame extends JFrame implements PlugIn
 		final PropertyChangeListener positiveChecker = new PositiveCheckPropertyListener();
 
 		setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
-		setBounds( 100, 100, 597, 348 );
+		setBounds( 100, 100, 597, 431 );
 		setResizable( false );
 
 		final JPanel mainPanel = new JPanel();
@@ -158,7 +173,7 @@ public class OptofluidicsParametersEditorFrame extends JFrame implements PlugIn
 		setContentPane( mainPanel );
 
 		final JButton btnReloadFromFile = new JButton( "Reload from file", RELOAD_ICON );
-		btnReloadFromFile.setBounds( 15, 275, 127, 32 );
+		btnReloadFromFile.setBounds( 11, 359, 127, 32 );
 		btnReloadFromFile.addActionListener( new ActionListener()
 		{
 			@Override
@@ -169,7 +184,7 @@ public class OptofluidicsParametersEditorFrame extends JFrame implements PlugIn
 		} );
 
 		final JButton btnSaveToFile = new JButton( "Save to file", SAVE_ICON );
-		btnSaveToFile.setBounds( 466, 275, 107, 32 );
+		btnSaveToFile.setBounds( 466, 359, 107, 32 );
 		btnSaveToFile.addActionListener( new ActionListener()
 		{
 			@Override
@@ -180,7 +195,7 @@ public class OptofluidicsParametersEditorFrame extends JFrame implements PlugIn
 		} );
 
 		final JButton btnCancel = new JButton( "Cancel", CANCEL_ICON );
-		btnCancel.setBounds( 361, 275, 95, 32 );
+		btnCancel.setBounds( 361, 359, 95, 32 );
 		btnCancel.addActionListener( new ActionListener()
 		{
 			@Override
@@ -197,7 +212,7 @@ public class OptofluidicsParametersEditorFrame extends JFrame implements PlugIn
 
 		final JPanel detectionPanel = new JPanel();
 		detectionPanel.setLayout( null );
-		detectionPanel.setBounds( 15, 11, 276, 89 );
+		detectionPanel.setBounds( 11, 113, 276, 89 );
 		detectionPanel.setBorder( new LineBorder( new Color( 0, 0, 0 ) ) );
 
 		final JLabel lblDetection = new JLabel( "Detection." );
@@ -238,7 +253,7 @@ public class OptofluidicsParametersEditorFrame extends JFrame implements PlugIn
 
 		final JPanel trackingPanel = new JPanel();
 		trackingPanel.setBorder( new LineBorder( new Color( 0, 0, 0 ) ) );
-		trackingPanel.setBounds( 15, 111, 276, 135 );
+		trackingPanel.setBounds( 11, 213, 276, 135 );
 		mainPanel.add( trackingPanel );
 		trackingPanel.setLayout( null );
 
@@ -297,7 +312,7 @@ public class OptofluidicsParametersEditorFrame extends JFrame implements PlugIn
 
 		final JPanel trackFiltersPanel = new JPanel();
 		trackFiltersPanel.setBorder( new LineBorder( new Color( 0, 0, 0 ) ) );
-		trackFiltersPanel.setBounds( 301, 11, 276, 89 );
+		trackFiltersPanel.setBounds( 297, 113, 276, 89 );
 		mainPanel.add( trackFiltersPanel );
 		trackFiltersPanel.setLayout( null );
 
@@ -334,7 +349,7 @@ public class OptofluidicsParametersEditorFrame extends JFrame implements PlugIn
 
 		final JPanel panelVelocityAnalysis = new JPanel();
 		panelVelocityAnalysis.setBorder( new LineBorder( new Color( 0, 0, 0 ) ) );
-		panelVelocityAnalysis.setBounds( 301, 111, 276, 109 );
+		panelVelocityAnalysis.setBounds( 297, 213, 276, 109 );
 		mainPanel.add( panelVelocityAnalysis );
 		panelVelocityAnalysis.setLayout( null );
 
@@ -376,13 +391,49 @@ public class OptofluidicsParametersEditorFrame extends JFrame implements PlugIn
 		tftSmoothingWindow.setBounds( 126, 30, 60, 16 );
 		panelVelocityAnalysis.add( tftSmoothingWindow );
 
-		//
+		/*
+		 * Parameters and comments.
+		 */
+
+		final JLabel lblParameterSetName = new JLabel( "Parameter set name" );
+		lblParameterSetName.setFont( BIG_BOLD_FONT );
+		lblParameterSetName.setBounds( 11, 11, 195, 26 );
+
+		commentsTextArea = new JTextArea();
+		commentsTextArea.setWrapStyleWord( true );
+		commentsTextArea.setLineWrap( true );
+		commentsTextArea.setFont( BIG_FONT );
+		commentsTextArea.setOpaque( false );
+		commentsTextArea.setEditable( true );
+		commentsTextArea.setBounds( 11, 48, 562, 54 );
+
+		final Object[] names = OFAppUtils.getParameterSetList();
+		parameterSetsComboBox = new JComboBox( names );
+		parameterSetsComboBox.addActionListener( new ActionListener()
+		{
+			@Override
+			public void actionPerformed( final ActionEvent e )
+			{
+				final String parametersSetName = ( String ) parameterSetsComboBox.getSelectedItem();
+				parameters = new OptofluidicsParameters( Logger.IJ_LOGGER, parametersSetName );
+				reload();
+			}
+		} );
+		parameterSetsComboBox.setBounds( 216, 11, 357, 26 );
+
+		/*
+		 * Add
+		 */
 
 		mainPanel.add( btnReloadFromFile );
 		mainPanel.add( btnCancel );
 		mainPanel.add( btnSaveToFile );
 		mainPanel.add( trackingPanel );
 		mainPanel.add( detectionPanel );
+		mainPanel.add( commentsTextArea );
+		mainPanel.add( lblParameterSetName );
+		mainPanel.add( parameterSetsComboBox );
+
 		setFocusTraversalPolicy( new FocusTraversalOnArray( new Component[] {
 				ftfParticleSize, ftfQualityThreshold,
 				comboBoxTracker, tftInitialRadius, tftSearchRadius, tftMaxFrameGap,
@@ -423,11 +474,16 @@ public class OptofluidicsParametersEditorFrame extends JFrame implements PlugIn
 	{
 		if ( null == parametersSetName || parametersSetName.isEmpty() )
 		{
-			final OptofluidicsParametersChooser chooser = new OptofluidicsParametersChooser();
-			parametersSetName = chooser.getUserChoice();
-			if ( !chooser.wasOKed() ) { return; }
+			final String[] parameterSets = OFAppUtils.getParameterSetList();
+			if ( parameterSets.length > 0 )
+			{
+				parametersSetName = parameterSets[ 0 ];
+			}
+			else
+			{
+				parametersSetName = null;
+			}
 		}
-
 		parameters = new OptofluidicsParameters( Logger.IJ_LOGGER, parametersSetName );
 		updateGUI();
 		setVisible( true );
@@ -442,5 +498,4 @@ public class OptofluidicsParametersEditorFrame extends JFrame implements PlugIn
 		ImageJ.main( args );
 		new OptofluidicsParametersEditorFrame().run( null );
 	}
-
 }
