@@ -28,6 +28,10 @@ public class OptofluidicsParameters
 	 */
 	public static final String KEY_OPTOFLUIDICS_PARAMETERS = "optofluidics_parameter_set";
 
+	public static final String KEY_COMMENTS = "comments";
+
+	public static final String DEFAULT_COMMENTS = "Default parameters.";
+
 	public static final String KEY_PARTICLE_DIAMETER = "particle_radius";
 
 	public static final double DEFAULT_PARTICLE_DIAMETER = 10.0;
@@ -50,7 +54,7 @@ public class OptofluidicsParameters
 
 	public static final Properties DEFAULT_PARAMETERS = new Properties();
 
-	private static final String COMMENTS = "# Parameters for the Optofluidics applications.\n"
+	private static final String HEADER = "# Parameters for the Optofluidics applications.\n"
 			+ "#\n"
 			+ "# No space around '='!\n\n";
 
@@ -93,11 +97,16 @@ public class OptofluidicsParameters
 			"filterTrackDisplacement",
 			"smoothingWindow",
 			"velocityThreshold",
-			"minConsecutiveFrames"
+			"minConsecutiveFrames",
+			"comments"
 			};
+
+
 
 	static
 	{
+		DEFAULT_PARAMETERS.setProperty( KEY_COMMENTS, DEFAULT_COMMENTS );
+
 		// Detection.
 		DEFAULT_PARAMETERS.setProperty( KEY_PARTICLE_DIAMETER, "" + DEFAULT_PARTICLE_DIAMETER );
 		DEFAULT_PARAMETERS.setProperty( KEY_QUALITY_THRESHOLD, "" + DEFAULT_QUALITY_THESHOLD );
@@ -145,6 +154,8 @@ public class OptofluidicsParameters
 	private double filterTrackDisplacement;
 
 	private final String parametersSetName;
+
+	private String comments;
 
 	/*
 	 * CONSTRUCTOR
@@ -194,6 +205,9 @@ public class OptofluidicsParameters
 		 * Unwrap
 		 */
 
+		// Comments
+		this.comments = parameters.getProperty( KEY_COMMENTS );
+
 		// Particle detection
 		this.particleDiameter = readDouble( KEY_PARTICLE_DIAMETER, DEFAULT_PARTICLE_DIAMETER );
 		this.qualityThreshold = readDouble( KEY_QUALITY_THRESHOLD, DEFAULT_QUALITY_THESHOLD );
@@ -229,6 +243,10 @@ public class OptofluidicsParameters
 
 			output = new FileOutputStream( file );
 
+			// Comments & key
+			parameters.setProperty( KEY_OPTOFLUIDICS_PARAMETERS, "" + true );
+			parameters.setProperty( KEY_COMMENTS, comments );
+
 			// Particle detection.
 			parameters.setProperty( KEY_PARTICLE_DIAMETER, "" + particleDiameter );
 			parameters.setProperty( KEY_QUALITY_THRESHOLD, "" + qualityThreshold );
@@ -249,7 +267,7 @@ public class OptofluidicsParameters
 			parameters.setProperty( KEY_SMOOTHING_WINDOW, "" + smoothingWindow );
 
 			// Save properties to project root folder.
-			parameters.store( output, COMMENTS );
+			parameters.store( output, HEADER );
 
 			logger.log( "Saved parameters to file " + file + ".\n" );
 		}
@@ -472,6 +490,21 @@ public class OptofluidicsParameters
 	public void setSmoothingWindow( final int smoothingWindow )
 	{
 		this.smoothingWindow = smoothingWindow;
+	}
+
+	public String getComments()
+	{
+		return comments;
+	}
+
+	public void setComments( final String comments )
+	{
+		this.comments = comments;
+	}
+
+	public String getParametersSetName()
+	{
+		return parametersSetName;
 	}
 
 	/*
