@@ -29,6 +29,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -94,7 +95,7 @@ public class OptofluidicsBatchProcessor_ implements PlugIn
 			}
 		}
 
-		if ( null == folder || folder.isEmpty() )
+		if ( null == folder || folder.isEmpty() || null == parameterSetName || parameterSetName.isEmpty() )
 		{
 			// Use dialog.
 			OptofluidicsUtil.setSystemLookAndFeel();
@@ -108,13 +109,40 @@ public class OptofluidicsBatchProcessor_ implements PlugIn
 
 			final GenericDialogPlus dialog = new GenericDialogPlus( "Optofluidics batch processor " + Main.OPTOFLUIDICS_LIB_VERSION );
 			dialog.addImage( Main.OPTOFLUIDICS_ORANGE_LOGO );
+
 			dialog.addMessage( "Browse to the folder containing the data." );
 			dialog.addDirectoryField( "Folder", path );
+
+			final String[] availableParameters = OFAppUtils.getParameterSetList();
+			if ( availableParameters != null && availableParameters.length > 0 )
+			{
+				dialog.addMessage( "Select a parameter set." );
+				String defaultChoice;
+				if ( parameterSetName != null && !parameterSetName.isEmpty() && Arrays.asList( availableParameters ).contains( parameterSetName ) )
+				{
+					defaultChoice = parameterSetName;
+				}
+				else
+				{
+					defaultChoice = availableParameters[ 0 ];
+				}
+				dialog.addChoice( "Parameters set", availableParameters, defaultChoice );
+			}
+			else
+			{
+				dialog.addMessage( "No parameters set found. Relying on defaults." );
+			}
+
 			dialog.addHelp( HELP_TEXT );
 			dialog.showDialog();
 
 			if ( !dialog.wasOKed() ) { return; }
 			path = dialog.getNextString();
+			String chosenParameterSet = dialog.getNextChoice();
+			if ( chosenParameterSet.length() < 1 )
+			{
+				chosenParameterSet = null;
+			}
 		}
 		else
 		{
@@ -456,7 +484,8 @@ public class OptofluidicsBatchProcessor_ implements PlugIn
 	public static void main( final String[] args )
 	{
 		ImageJ.main( args );
-		new OptofluidicsBatchProcessor_().run( "/Users/tinevez/Development/OptoFluidics/Optofluidics/samples/Data" );
+//		new OptofluidicsBatchProcessor_().run( "folder=[/Users/tinevez/Development/OptoFluidics/Optofluidics/samples/Data] parameters=test.properties" );
+		new OptofluidicsBatchProcessor_().run( null );
 	}
 
 }

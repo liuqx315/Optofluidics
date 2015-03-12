@@ -22,6 +22,12 @@ public class OptofluidicsParameters
 {
 	private static final String PROPERTIES_FILE = "optofluidics.properties";
 
+	/**
+	 * The key that tells whether a properties file is an OptpFluidics parameter
+	 * set. Must be present and set to "true".
+	 */
+	public static final String KEY_OPTOFLUIDICS_PARAMETERS = "optofluidics_parameter_set";
+
 	public static final String KEY_PARTICLE_DIAMETER = "particle_radius";
 
 	public static final double DEFAULT_PARTICLE_DIAMETER = 10.0;
