@@ -29,7 +29,6 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -95,10 +94,14 @@ public class OptofluidicsBatchProcessor_ implements PlugIn
 			}
 		}
 
-		if ( null == folder || folder.isEmpty() || null == parameterSetName || parameterSetName.isEmpty() )
+		if ( null == folder || folder.isEmpty() )
 		{
 			// Use dialog.
 			OptofluidicsUtil.setSystemLookAndFeel();
+			if ( null != folder )
+			{
+				path = folder;
+			}
 			if ( null == path || path.length() == 0 )
 			{
 				final File home = new File( System.getProperty( "user.dir" ) );
@@ -107,47 +110,35 @@ public class OptofluidicsBatchProcessor_ implements PlugIn
 				path = new File( parent2 != null ? parent2 : parent != null ? parent : home, "" ).getAbsolutePath();
 			}
 
-			final GenericDialogPlus dialog = new GenericDialogPlus( "Optofluidics batch processor " + Main.OPTOFLUIDICS_LIB_VERSION );
-			dialog.addImage( Main.OPTOFLUIDICS_ORANGE_LOGO );
+			final GenericDialogPlus dialogPath = new GenericDialogPlus( "Optofluidics batch processor " + Main.OPTOFLUIDICS_LIB_VERSION );
+			dialogPath.addImage( Main.OPTOFLUIDICS_ORANGE_LOGO );
 
-			dialog.addMessage( "Browse to the folder containing the data." );
-			dialog.addDirectoryField( "Folder", path );
+			dialogPath.addMessage( "Browse to the folder containing the data." );
+			dialogPath.addDirectoryField( "Folder", path );
 
-			final String[] availableParameters = OFAppUtils.getParameterSetList();
-			if ( availableParameters != null && availableParameters.length > 0 )
-			{
-				dialog.addMessage( "Select a parameter set." );
-				String defaultChoice;
-				if ( parameterSetName != null && !parameterSetName.isEmpty() && Arrays.asList( availableParameters ).contains( parameterSetName ) )
-				{
-					defaultChoice = parameterSetName;
-				}
-				else
-				{
-					defaultChoice = availableParameters[ 0 ];
-				}
-				dialog.addChoice( "Parameters set", availableParameters, defaultChoice );
-			}
-			else
-			{
-				dialog.addMessage( "No parameters set found. Relying on defaults." );
-			}
+			dialogPath.addHelp( HELP_TEXT );
+			dialogPath.showDialog();
 
-			dialog.addHelp( HELP_TEXT );
-			dialog.showDialog();
-
-			if ( !dialog.wasOKed() ) { return; }
-			path = dialog.getNextString();
-			String chosenParameterSet = dialog.getNextChoice();
-			if ( chosenParameterSet.length() < 1 )
-			{
-				chosenParameterSet = null;
-			}
+			if ( !dialogPath.wasOKed() ) { return; }
+			path = dialogPath.getNextString();
 		}
 		else
 		{
 			// Run with plugin argument as input.
 			path = folder;
+		}
+
+		/*
+		 * Parameter set argument
+		 */
+
+		if ( null == parameterSetName || parameterSetName.isEmpty() )
+		{
+			// Use dialog.
+			OptofluidicsUtil.setSystemLookAndFeel();
+			final OptofluidicsParametersChooser parameterSetDialog = new OptofluidicsParametersChooser();
+			parameterSetName = parameterSetDialog.getUserChoice();
+			if ( !parameterSetDialog.wasOKed() ) { return; }
 		}
 
 		final File file = new File( path );
@@ -484,7 +475,7 @@ public class OptofluidicsBatchProcessor_ implements PlugIn
 	public static void main( final String[] args )
 	{
 		ImageJ.main( args );
-//		new OptofluidicsBatchProcessor_().run( "folder=[/Users/tinevez/Development/OptoFluidics/Optofluidics/samples/Data] parameters=test.properties" );
+//		new OptofluidicsBatchProcessor_().run( "folder=[/Users/tinevez/Development/Optofluidics/samples/Data] " );
 		new OptofluidicsBatchProcessor_().run( null );
 	}
 
