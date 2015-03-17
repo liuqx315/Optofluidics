@@ -451,13 +451,13 @@ public class OptofluidicsParametersEditorFrame extends JFrame implements PlugIn
 		mainPanel.add( commentsTextArea );
 		mainPanel.add( lblParameterSetName );
 		mainPanel.add( parameterSetsComboBox );
-
 		setFocusTraversalPolicy( new FocusTraversalOnArray( new Component[] {
-				ftfParticleSize, ftfQualityThreshold,
+				parameterSetsComboBox,
+				comboBoxStillSub, ftfParticleSize, ftfQualityThreshold,
 				comboBoxTracker, tftInitialRadius, tftSearchRadius, tftMaxFrameGap,
 				tftFilterNSpots, tftFilterTrackDisplacement,
 				tftSmoothingWindow, tftVelocityThreshold, tftMinConsFrames,
-				btnSaveToFile, btnReloadFromFile, btnCancel } ) );
+				btnReloadFromFile, btnCancel, btnSaveToFile } ) );
 	}
 
 	/*
