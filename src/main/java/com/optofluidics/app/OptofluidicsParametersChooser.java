@@ -115,7 +115,7 @@ public class OptofluidicsParametersChooser
 			e.printStackTrace();
 		}
 		final String comments = temp.getProperty( "comments" );
-		final String str;
+		String str;
 		if ( null == comments )
 		{
 			str = "No comments for this set.";
@@ -123,6 +123,18 @@ public class OptofluidicsParametersChooser
 		else
 		{
 			str = OFAppUtils.wordWrap( comments, 50 );
+		}
+		// Count lines & add some to get up to 7 lines.
+		int count = str.length() - str.replace( "\n", "" ).length();
+		if ( count > 7 )
+		{
+			count = 7;
+		}
+		final String[] extraLines = new String[ 7 - count ];
+		Arrays.fill( extraLines, " \n" );
+		for ( final String el : extraLines )
+		{
+			str += el;
 		}
 		message.setText( str );
 	}
