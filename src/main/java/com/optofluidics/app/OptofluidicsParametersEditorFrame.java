@@ -30,6 +30,8 @@ import org.eclipse.wb.swing.FocusTraversalOnArray;
 import com.optofluidics.Main;
 import com.optofluidics.OptofluidicsParameters;
 import com.optofluidics.OptofluidicsParameters.TrackerChoice;
+import com.optofluidics.plugin.StillSubtractor_;
+import com.optofluidics.plugin.StillSubtractor_.Method;
 import com.optofluidics.util.OptofluidicsUtil;
 
 public class OptofluidicsParametersEditorFrame extends JFrame implements PlugIn
@@ -82,6 +84,8 @@ public class OptofluidicsParametersEditorFrame extends JFrame implements PlugIn
 
 	private JComboBox parameterSetsComboBox;
 
+	private JComboBox comboBoxStillSub;
+
 	/*
 	 * CONSTRUCTOR
 	 */
@@ -105,6 +109,7 @@ public class OptofluidicsParametersEditorFrame extends JFrame implements PlugIn
 		parameters.setComments( commentsTextArea.getText() );
 
 		// Detection.
+		parameters.setStillSubtractionMethod( ( Method ) comboBoxStillSub.getSelectedItem() );
 		parameters.setParticleDiameter( ( ( Number ) ftfParticleSize.getValue() ).doubleValue() );
 		parameters.setQualityThreshold( ( ( Number ) ftfQualityThreshold.getValue() ).doubleValue() );
 
@@ -138,6 +143,7 @@ public class OptofluidicsParametersEditorFrame extends JFrame implements PlugIn
 		commentsTextArea.setText( parameters.getComments() );
 
 		// Detection.
+		comboBoxStillSub.setSelectedItem( parameters.getStillSubtractionMethod() );
 		ftfParticleSize.setValue( Double.valueOf( parameters.getParticleDiameter() ) );
 		ftfQualityThreshold.setValue( Double.valueOf( parameters.getQualityThreshold() ) );
 
@@ -212,7 +218,7 @@ public class OptofluidicsParametersEditorFrame extends JFrame implements PlugIn
 
 		final JPanel detectionPanel = new JPanel();
 		detectionPanel.setLayout( null );
-		detectionPanel.setBounds( 11, 113, 276, 89 );
+		detectionPanel.setBounds( 11, 113, 276, 115 );
 		detectionPanel.setBorder( new LineBorder( new Color( 0, 0, 0 ) ) );
 
 		final JLabel lblDetection = new JLabel( "Detection." );
@@ -220,28 +226,39 @@ public class OptofluidicsParametersEditorFrame extends JFrame implements PlugIn
 		lblDetection.setLocation(6, 6);
 		lblDetection.setFont( BOLD_FONT );
 
+		final JLabel lblStillSubtractionMethod = new JLabel( "Still sub. method:" );
+		lblStillSubtractionMethod.setBounds( 6, 31, 81, 16 );
+		lblStillSubtractionMethod.setFont( MAIN_FONT );
+
+		comboBoxStillSub = new JComboBox( StillSubtractor_.Method.values() );
+		comboBoxStillSub.setFont( MAIN_FONT );
+		comboBoxStillSub.setBounds( 99, 26, 171, 27 );
+		detectionPanel.add( comboBoxStillSub );
+
+
 		final JLabel lblParticleSize = new JLabel( "Particle size:" );
 		lblParticleSize.setSize( 110, 16 );
-		lblParticleSize.setLocation( 6, 32 );
+		lblParticleSize.setLocation( 6, 58 );
 		lblParticleSize.setFont( MAIN_FONT );
 
 		ftfParticleSize = new JFormattedTextField( DECIMAL_FORMAT );
-		ftfParticleSize.setBounds( 126, 32, 60, 16 );
+		ftfParticleSize.setBounds( 126, 58, 60, 16 );
 		ftfParticleSize.setFont( MAIN_FONT );
 		ftfParticleSize.addPropertyChangeListener( "value", positiveChecker );
 
 		final JLabel lblQualityThreshold = new JLabel( "Quality threshold:" );
 		lblQualityThreshold.setSize( 110, 16 );
-		lblQualityThreshold.setLocation( 6, 59 );
+		lblQualityThreshold.setLocation( 6, 85 );
 		lblQualityThreshold.setFont( MAIN_FONT );
 
 		ftfQualityThreshold = new JFormattedTextField( DECIMAL_FORMAT );
 		ftfQualityThreshold.setSize( 60, 16 );
-		ftfQualityThreshold.setLocation( 126, 59 );
+		ftfQualityThreshold.setLocation( 126, 85 );
 		ftfQualityThreshold.addPropertyChangeListener( "value", positiveChecker );
 		ftfQualityThreshold.setFont( MAIN_FONT );
 
 		detectionPanel.add( lblDetection );
+		detectionPanel.add( lblStillSubtractionMethod );
 		detectionPanel.add( lblParticleSize );
 		detectionPanel.add( ftfParticleSize );
 		detectionPanel.add( lblQualityThreshold );
@@ -253,7 +270,7 @@ public class OptofluidicsParametersEditorFrame extends JFrame implements PlugIn
 
 		final JPanel trackingPanel = new JPanel();
 		trackingPanel.setBorder( new LineBorder( new Color( 0, 0, 0 ) ) );
-		trackingPanel.setBounds( 11, 213, 276, 135 );
+		trackingPanel.setBounds( 297, 113, 276, 135 );
 		mainPanel.add( trackingPanel );
 		trackingPanel.setLayout( null );
 
@@ -312,7 +329,7 @@ public class OptofluidicsParametersEditorFrame extends JFrame implements PlugIn
 
 		final JPanel trackFiltersPanel = new JPanel();
 		trackFiltersPanel.setBorder( new LineBorder( new Color( 0, 0, 0 ) ) );
-		trackFiltersPanel.setBounds( 297, 113, 276, 89 );
+		trackFiltersPanel.setBounds( 297, 260, 276, 89 );
 		mainPanel.add( trackFiltersPanel );
 		trackFiltersPanel.setLayout( null );
 
@@ -349,7 +366,7 @@ public class OptofluidicsParametersEditorFrame extends JFrame implements PlugIn
 
 		final JPanel panelVelocityAnalysis = new JPanel();
 		panelVelocityAnalysis.setBorder( new LineBorder( new Color( 0, 0, 0 ) ) );
-		panelVelocityAnalysis.setBounds( 297, 213, 276, 109 );
+		panelVelocityAnalysis.setBounds( 11, 240, 276, 109 );
 		mainPanel.add( panelVelocityAnalysis );
 		panelVelocityAnalysis.setLayout( null );
 
@@ -430,6 +447,7 @@ public class OptofluidicsParametersEditorFrame extends JFrame implements PlugIn
 		mainPanel.add( btnSaveToFile );
 		mainPanel.add( trackingPanel );
 		mainPanel.add( detectionPanel );
+
 		mainPanel.add( commentsTextArea );
 		mainPanel.add( lblParameterSetName );
 		mainPanel.add( parameterSetsComboBox );
