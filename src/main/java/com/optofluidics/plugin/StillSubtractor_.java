@@ -19,6 +19,7 @@ public class StillSubtractor_ implements PlugIn
 	public static enum Method
 	{
 		MEDIAN,
+		MEAN,
 		MODE;
 	}
 
@@ -40,6 +41,9 @@ public class StillSubtractor_ implements PlugIn
 		{
 		case MODE:
 			p = doModeProjection( imp );
+			break;
+		case MEAN:
+			p = doMeanProjection( imp );
 			break;
 		case MEDIAN:
 		default:
@@ -70,6 +74,14 @@ public class StillSubtractor_ implements PlugIn
 				}
 			}
 		}
+	}
+
+	private static ImagePlus doMeanProjection( final ImagePlus imp )
+	{
+		final ZProjector projector = new ZProjector( imp );
+		projector.setMethod( ZProjector.AVG_METHOD );
+		projector.doProjection();
+		return projector.getProjection();
 	}
 
 	private static ImagePlus doModeProjection( final ImagePlus imp )
@@ -170,7 +182,8 @@ public class StillSubtractor_ implements PlugIn
 
 	public static void main( final String[] args )
 	{
-		final File file = new File( "D:/Users/Jean-Yves/Desktop/83 - 2015-02-20 095535_ColumnSum.tif" );
+//		final File file = new File( "D:/Users/Jean-Yves/Desktop/83 - 2015-02-20 095535_ColumnSum.tif" );
+		final File file = new File( "samples/Data/101.0-2015-02-13 163957_ColumnSum.tif" );
 		ImageJ.main( args );
 		final ImagePlus imp = new ImagePlus( file.getAbsolutePath() );
 		imp.show();
@@ -178,7 +191,7 @@ public class StillSubtractor_ implements PlugIn
 		KymographGenerator.fromLineImageVertical( imp ).show();
 
 		System.out.println( "Subtracting." );
-		subtract( imp, Method.MEDIAN );
+		subtract( imp, Method.MEAN );
 		System.out.println( "Done." );
 
 		KymographGenerator.fromLineImageVertical( imp ).show();
