@@ -115,7 +115,16 @@ public class OptofluidicsParametersChooser
 			e.printStackTrace();
 		}
 		final String comments = temp.getProperty( "comments" );
-		message.setText( OFAppUtils.wordWrap( comments, 50 ) );
+		final String str;
+		if ( null == comments )
+		{
+			str = "No comments for this set.";
+		}
+		else
+		{
+			str = OFAppUtils.wordWrap( comments, 50 );
+		}
+		message.setText( str );
 	}
 
 	public static void main( final String[] args )
