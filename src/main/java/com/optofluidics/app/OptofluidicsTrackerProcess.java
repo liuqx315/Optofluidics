@@ -25,7 +25,6 @@ import net.imglib2.algorithm.MultiThreaded;
 import com.optofluidics.OptofluidicsParameters;
 import com.optofluidics.OptofluidicsParameters.TrackerChoice;
 import com.optofluidics.plugin.StillSubtractor_;
-import com.optofluidics.plugin.StillSubtractor_.Method;
 import com.optofluidics.trackmate.features.manual.EdgeSmoothedVelocityAnalyzer;
 import com.optofluidics.trackmate.features.manual.MotionTypeEdgeAnalyzer;
 import com.optofluidics.trackmate.features.manual.TrackPausingAnalyzer;
@@ -69,9 +68,9 @@ public class OptofluidicsTrackerProcess implements MultiThreaded, Algorithm
 		 * 1. Still defects subtraction.
 		 */
 
-		logger.log( "Still defects subtraction.\n" );
+		logger.log( "Still defects subtraction with " + parameters.getStillSubtractionMethod() + " method.\n" );
 		final long sStart = System.currentTimeMillis();
-		StillSubtractor_.subtract( imp, Method.MODE );
+		StillSubtractor_.subtract( imp, parameters.getStillSubtractionMethod() );
 		final long sEnd = System.currentTimeMillis();
 		logger.log( "Still defects subtraction done in " + ( sEnd - sStart ) / 1000 + " s.\n" );
 

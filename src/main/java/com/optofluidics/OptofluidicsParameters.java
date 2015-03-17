@@ -12,6 +12,8 @@ import java.lang.reflect.Field;
 import java.util.Map;
 import java.util.Properties;
 
+import com.optofluidics.plugin.StillSubtractor_.Method;
+
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.tracking.SpotTrackerFactory;
 import fiji.plugin.trackmate.tracking.TrackerKeys;
@@ -23,7 +25,7 @@ public class OptofluidicsParameters
 	private static final String PROPERTIES_FILE = "optofluidics.properties";
 
 	/**
-	 * The key that tells whether a properties file is an OptpFluidics parameter
+	 * The key that tells whether a properties file is an Optofluidics parameter
 	 * set. Must be present and set to "true".
 	 */
 	public static final String KEY_OPTOFLUIDICS_PARAMETERS = "optofluidics_parameter_set";
@@ -31,6 +33,10 @@ public class OptofluidicsParameters
 	public static final String KEY_COMMENTS = "comments";
 
 	public static final String DEFAULT_COMMENTS = "Default parameters.";
+
+	private static final String KEY_STILL_SUB_METHOD = "still_subtraction_method";
+
+	private static final Method DEFAULT_STILL_SUB_METHOD = Method.MEDIAN;
 
 	public static final String KEY_PARTICLE_DIAMETER = "particle_radius";
 
@@ -87,6 +93,7 @@ public class OptofluidicsParameters
 	private static final double DEFAULT_FILTER_TRACK_DISPLACEMENT = 5.0;
 
 	private static final String[] FIELDS = new String[] {
+			"stillSubtractionMethod",
 			"particleDiameter",
 			"qualityThreshold",
 			"trackerChoice",
@@ -108,6 +115,7 @@ public class OptofluidicsParameters
 		DEFAULT_PARAMETERS.setProperty( KEY_COMMENTS, DEFAULT_COMMENTS );
 
 		// Detection.
+		DEFAULT_PARAMETERS.setProperty( KEY_STILL_SUB_METHOD, "" + DEFAULT_STILL_SUB_METHOD );
 		DEFAULT_PARAMETERS.setProperty( KEY_PARTICLE_DIAMETER, "" + DEFAULT_PARTICLE_DIAMETER );
 		DEFAULT_PARAMETERS.setProperty( KEY_QUALITY_THRESHOLD, "" + DEFAULT_QUALITY_THESHOLD );
 
@@ -156,6 +164,8 @@ public class OptofluidicsParameters
 	private final String parametersSetName;
 
 	private String comments;
+
+	private Method stillSubtractionMethod;
 
 	/*
 	 * CONSTRUCTOR
@@ -209,6 +219,7 @@ public class OptofluidicsParameters
 		this.comments = parameters.getProperty( KEY_COMMENTS );
 
 		// Particle detection
+		this.stillSubtractionMethod = Method.valueOf( parameters.getProperty( KEY_STILL_SUB_METHOD ) );
 		this.particleDiameter = readDouble( KEY_PARTICLE_DIAMETER, DEFAULT_PARTICLE_DIAMETER );
 		this.qualityThreshold = readDouble( KEY_QUALITY_THRESHOLD, DEFAULT_QUALITY_THESHOLD );
 
@@ -248,6 +259,7 @@ public class OptofluidicsParameters
 			parameters.setProperty( KEY_COMMENTS, comments );
 
 			// Particle detection.
+			parameters.setProperty( KEY_STILL_SUB_METHOD, "" + stillSubtractionMethod );
 			parameters.setProperty( KEY_PARTICLE_DIAMETER, "" + particleDiameter );
 			parameters.setProperty( KEY_QUALITY_THRESHOLD, "" + qualityThreshold );
 
@@ -507,6 +519,16 @@ public class OptofluidicsParameters
 		return parametersSetName;
 	}
 
+	public Method getStillSubtractionMethod()
+	{
+		return stillSubtractionMethod;
+	}
+
+	public void setStillSubtractionMethod( final Method stillSubtractionMethod )
+	{
+		this.stillSubtractionMethod = stillSubtractionMethod;
+	}
+
 	/*
 	 * INNER CLASSES.
 	 */
@@ -589,4 +611,5 @@ public class OptofluidicsParameters
 	{
 		System.out.println( new OptofluidicsParameters( Logger.DEFAULT_LOGGER, null ).toString() );
 	}
+
 }
