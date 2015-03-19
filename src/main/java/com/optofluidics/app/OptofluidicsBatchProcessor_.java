@@ -18,6 +18,7 @@ import fiji.util.SplitString;
 import fiji.util.gui.GenericDialogPlus;
 import ij.ImageJ;
 import ij.ImagePlus;
+import ij.Macro;
 import ij.measure.ResultsTable;
 import ij.plugin.PlugIn;
 
@@ -67,18 +68,30 @@ public class OptofluidicsBatchProcessor_ implements PlugIn
 	/**
 	 * @param arg
 	 *            arg string, in the shape of
-	 * 
+	 *
 	 *            <pre>
 	 * folder=/path/to/master/folder parameters=optofluidics.parameters
 	 * </pre>
 	 */
 	@Override
-	public void run( final String arg )
+	public void run( String arg )
 	{
 		logger = new LogRecorder( Logger.IJ_LOGGER );
+		logger.log( "Received the following arg string: " + arg + "\n" );
 
 		String folder = null;
 		String parameterSetName = null;
+
+		if ( null == arg || arg.isEmpty() )
+		{
+			final String macroOption = Macro.getOptions();
+			if ( null != macroOption )
+			{
+				logger.log( "Detecting empty arg, catching macro option:\n" + macroOption + '\n' );
+				arg = macroOption.replace( ':', ' ' );
+			}
+		}
+
 		if ( null != arg )
 		{
 			try
@@ -93,6 +106,10 @@ public class OptofluidicsBatchProcessor_ implements PlugIn
 				e.printStackTrace();
 			}
 		}
+		logger.log( "Processor parameters:\n" );
+		logger.log( "Data folder = " + folder + "\n" );
+		logger.log( "Parameter set name = " + parameterSetName + "\n" );
+
 
 		if ( null == folder || folder.isEmpty() )
 		{
