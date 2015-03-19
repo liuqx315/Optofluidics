@@ -8,12 +8,12 @@
 	<parent>
 		<groupId>sc.fiji</groupId>
 		<artifactId>pom-fiji</artifactId>
-		<version>7.0.0</version>
+		<version>8.0.0</version>
 		<relativePath />
 	</parent>
 
 	<groupId>com.optofluidics</groupId>
-  <version>0.0.14-SNAPSHOT</version>
+  <version>0.0.14</version>
 	<name>plugins/Optofuidics_.jar</name>
 	
 	<properties>
