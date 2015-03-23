@@ -107,17 +107,15 @@ public class TiffFolderOpenerConverter
 				if ( !mkdirOK )
 				{
 					logger.error( "Could not create target move directory " + target + ". Not moving.\n" );
+					return imp;
 				}
 			}
-			else
+			final String name = sourceFolder.getName();
+			final File moved = new File( target, name );
+			final boolean moveOK = sourceFolder.renameTo( moved );
+			if ( !moveOK )
 			{
-				final String name = sourceFolder.getName();
-				final File moved = new File( target, name );
-				final boolean moveOK = sourceFolder.renameTo( moved );
-				if ( !moveOK )
-				{
-					logger.error( "Could not move " + sourceFolder + " to " + moved + ".\n" );
-				}
+				logger.error( "Could not move " + sourceFolder + " to " + moved + ".\n" );
 			}
 		}
 		return imp;
