@@ -11,7 +11,7 @@ public class Main
 
 	public static final ImageIcon OPTOFLUIDICS_ORANGE_LOGO = new ImageIcon( Main.class.getResource( "OptofluidicsOrangeLogo.jpg" ) );
 
-	public static final String OPTOFLUIDICS_LIB_VERSION = "v0.0.16";
+	public static final String OPTOFLUIDICS_LIB_VERSION = "v0.0.17-SNAPSHOT";
 
 	private Main()
 	{}
