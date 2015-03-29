@@ -88,7 +88,8 @@ public class OptofluidicsBatchProcessor_ implements PlugIn
 			if ( null != macroOption )
 			{
 				logger.log( "Detecting empty arg, catching macro option:\n" + macroOption + '\n' );
-				arg = macroOption.replace( ':', ' ' );
+//				arg = macroOption.replace( ':', ' ' );
+				arg = macroOption;
 			}
 		}
 

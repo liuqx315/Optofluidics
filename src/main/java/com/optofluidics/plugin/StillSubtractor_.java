@@ -20,7 +20,8 @@ public class StillSubtractor_ implements PlugIn
 	{
 		MEDIAN,
 		MEAN,
-		MODE;
+		MODE,
+		NONE;
 	}
 
 	@Override
@@ -45,6 +46,8 @@ public class StillSubtractor_ implements PlugIn
 		case MEAN:
 			p = doMeanProjection( imp );
 			break;
+		case NONE:
+			return;
 		case MEDIAN:
 		default:
 			p = doMedianProjection( imp );
