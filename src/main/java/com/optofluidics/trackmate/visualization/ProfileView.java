@@ -351,6 +351,14 @@ public class ProfileView extends AbstractTrackMateModelView
 			profileOverlay.setFrame( frame );
 			chart.fireChartChanged();
 		}
+		new Thread( "ImagePlus frame changer thread" )
+		{
+			@Override
+			public void run()
+			{
+				imp.setT( frame + 1 );
+			};
+		}.start();
 	}
 
 	@Override
