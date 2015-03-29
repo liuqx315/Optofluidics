@@ -170,7 +170,7 @@ public class ProfileView extends AbstractTrackMateModelView
 		 */
 
 		final DefaultXYDataset dataset = new DefaultXYDataset();
-		dataset.addSeries( "Spectrum", new double[][] { X, Y } );
+		dataset.addSeries( "X Profile", new double[][] { X, Y } );
 
 		/*
 		 * Chart
