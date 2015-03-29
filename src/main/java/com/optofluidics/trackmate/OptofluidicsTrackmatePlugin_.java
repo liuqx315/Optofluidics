@@ -68,6 +68,20 @@ public class OptofluidicsTrackmatePlugin_ extends TrackMatePlugIn_
 				return descriptors;
 			}
 
+			@Override
+			protected WizardPanelDescriptor nextDescriptor( final WizardPanelDescriptor currentDescriptor )
+			{
+				if ( currentDescriptor == initFilterDescriptor )
+				{
+					// Skip view choice.
+					return spotFilterDescriptor;
+				}
+				else
+				{
+					return super.nextDescriptor( currentDescriptor );
+				}
+			}
+
 		};
 
 		;
