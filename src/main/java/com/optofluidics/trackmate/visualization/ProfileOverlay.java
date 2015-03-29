@@ -19,6 +19,7 @@ import org.jfree.chart.JFreeChart;
 import org.jfree.chart.event.OverlayChangeListener;
 import org.jfree.chart.panel.Overlay;
 import org.jfree.chart.plot.XYPlot;
+import org.jfree.data.xy.DefaultXYDataset;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
 import fiji.plugin.trackmate.Model;
@@ -334,11 +335,32 @@ public class ProfileOverlay implements Overlay
 	protected void drawSpot( final Spot spot, final Graphics2D g2, final XYPlot plot, final Rectangle2D plotArea, final double radiusRatio, final boolean spotNameVisible )
 	{
 		final double xval = spot.getDoublePosition( 0 );
-		final double yval = spot.getFeature( SpotIntensityAnalyzerFactory.MAX_INTENSITY ).doubleValue();
+
+		/*
+		 * Try to guess a decent Y position. We can rely on the max intensity of
+		 * the spot. But if this feature is not there yet, we have to get it
+		 * somehow.
+		 */
+		final Double yfeat = spot.getFeature( SpotIntensityAnalyzerFactory.MAX_INTENSITY );
+		final double yval;
+		if ( yfeat != null )
+		{
+			yval = yfeat.doubleValue();
+		}
+		else
+		{
+			final DefaultXYDataset dataset = ( DefaultXYDataset ) plot.getDataset();
+			final double prec = dataset.getXValue( 0, 1 ) - dataset.getXValue( 0, 0 );
+			yval = binSearch( dataset, spot.getDoublePosition( 0 ), 0, dataset.getItemCount( 0 ), prec );
+		}
 		final double radiusVal = radiusRatio * spot.getFeature( Spot.RADIUS ).doubleValue();
 
 		final int px = ( int ) plot.getDomainAxis().valueToJava2D( xval, plotArea, plot.getDomainAxisEdge() );
-		final int radius = ( int ) ( plot.getDomainAxis().valueToJava2D( radiusVal, plotArea, plot.getDomainAxisEdge() ) - plot.getDomainAxis().valueToJava2D( 0, plotArea, plot.getDomainAxisEdge() ) );
+		int radius = ( int ) ( plot.getDomainAxis().valueToJava2D( radiusVal, plotArea, plot.getDomainAxisEdge() ) - plot.getDomainAxis().valueToJava2D( 0, plotArea, plot.getDomainAxisEdge() ) );
+		if ( radius < 3 )
+		{
+			radius = 3;
+		}
 		final int py = ( int ) plot.getRangeAxis().valueToJava2D( yval, plotArea, plot.getRangeAxisEdge() );
 
 		if ( px < plotArea.getMinX() || px > plotArea.getMaxX() ) { return; }
@@ -363,6 +385,25 @@ public class ProfileOverlay implements Overlay
 		}
 	}
 
+	private static double binSearch( final DefaultXYDataset dataset, final double key, final int low, final int high, final double prec )
+	{
+		if ( low > high ) { return Double.NaN; }
+
+		final int middle = ( high + low ) / 2;
+		final double diff = key - dataset.getXValue( 0, middle );
+		if ( Math.abs( diff ) <= prec )
+		{
+			return dataset.getYValue( 0, middle );
+		}
+		else if ( diff > 0 )
+		{
+			return binSearch( dataset, key, middle + 1, high, prec );
+		}
+		else
+		{
+			return binSearch( dataset, key, low, middle - 1, prec );
+		}
+	}
 
 	@Override
 	public void addChangeListener( final OverlayChangeListener listener )
