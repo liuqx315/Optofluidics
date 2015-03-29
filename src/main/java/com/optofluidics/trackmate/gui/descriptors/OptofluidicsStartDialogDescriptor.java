@@ -55,7 +55,6 @@ public class OptofluidicsStartDialogDescriptor extends StartDialogDescriptor
 	@Override
 	public void displayingPanel()
 	{
-		System.out.println( "Coucou!" );// DEBUG
 		super.displayingPanel();
 	}
 
