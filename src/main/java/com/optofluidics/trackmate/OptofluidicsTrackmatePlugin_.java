@@ -7,6 +7,7 @@ import ij.WindowManager;
 
 import java.util.Collection;
 
+import com.optofluidics.trackmate.gui.descriptors.OptofluidicsSpotFeatureCalculationDescriptor;
 import com.optofluidics.trackmate.gui.descriptors.OptofluidicsStartDialogDescriptor;
 
 import fiji.plugin.trackmate.TrackMate;
@@ -62,25 +63,26 @@ public class OptofluidicsTrackmatePlugin_ extends TrackMatePlugIn_
 			protected Collection< WizardPanelDescriptor > createDescriptors()
 			{
 				final Collection< WizardPanelDescriptor > descriptors = super.createDescriptors();
+
+				/*
+				 * Start dialog. Start with a profile view.
+				 */
 				descriptors.remove( descriptors );
 				startDialoDescriptor = new OptofluidicsStartDialogDescriptor( this );
 				descriptors.add( startDialoDescriptor );
+
+				/*
+				 * View choice. Skip choice, just compute features.
+				 */
+				descriptors.remove( viewChoiceDescriptor );
+				viewChoiceDescriptor = new OptofluidicsSpotFeatureCalculationDescriptor( getViewProvider(), getGuimodel(), this );
+				descriptors.add( viewChoiceDescriptor );
+
+				// return.
 				return descriptors;
 			}
 
-			@Override
-			protected WizardPanelDescriptor nextDescriptor( final WizardPanelDescriptor currentDescriptor )
-			{
-				if ( currentDescriptor == initFilterDescriptor )
-				{
-					// Skip view choice.
-					return spotFilterDescriptor;
-				}
-				else
-				{
-					return super.nextDescriptor( currentDescriptor );
-				}
-			}
+
 
 		};
 
