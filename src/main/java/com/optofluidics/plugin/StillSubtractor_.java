@@ -1,5 +1,7 @@
 package com.optofluidics.plugin;
 
+import fiji.util.gui.GenericDialogPlus;
+import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -11,6 +13,7 @@ import ij.process.ImageProcessor;
 import java.io.File;
 import java.util.Arrays;
 
+import com.optofluidics.Main;
 import com.optofluidics.trackmate.visualization.KymographGenerator;
 
 public class StillSubtractor_ implements PlugIn
@@ -28,7 +31,35 @@ public class StillSubtractor_ implements PlugIn
 	public void run( final String arg )
 	{
 		final ImagePlus imp = WindowManager.getCurrentImage();
-		subtract( imp, Method.MEDIAN );
+		if ( null == imp )
+		{
+			IJ.error( "Still defects subtractor " + Main.OPTOFLUIDICS_LIB_VERSION, "Please open an image first." );
+			return;
+		}
+
+		final GenericDialogPlus dialog = new GenericDialogPlus( "Still defects subtractor " + Main.OPTOFLUIDICS_LIB_VERSION );
+		dialog.addImage( Main.OPTOFLUIDICS_ORANGE_LOGO );
+		dialog.addMessage( "Choose a still subtraction method." );
+		final String[] names = new String[ Method.values().length ];
+		for ( int i = 0; i < names.length; i++ )
+		{
+			names[ i ] = Method.values()[ i ].name();
+		}
+		dialog.addChoice( "method", names, Method.MEDIAN.name() );
+
+		dialog.showDialog();
+		if ( !dialog.wasOKed() ) { return; }
+
+		final String choice = dialog.getNextChoice();
+		final Method method = Method.valueOf( choice );
+
+		IJ.showStatus( "Still subtraction with method: " + method );
+		final long start = System.currentTimeMillis();
+
+		subtract( imp, method );
+
+		final long end = System.currentTimeMillis();
+		IJ.showStatus( "Done in " + ( ( end - start ) / 1000 ) + " ms." );
 	}
 
 	public static void subtract( final ImagePlus imp, final Method method )
