@@ -24,7 +24,6 @@ import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.NumberAxis;
@@ -128,7 +127,7 @@ public class ProfileView extends AbstractTrackMateModelView
 			break;
 		}
 		this.unit = imp.getCalibration().getUnits();
-		this.title = imp.getShortTitle();
+		this.title = imp.getTitle();
 		this.Y = new double[ imp.getWidth() ];
 		this.X = new double[ Y.length ];
 		for ( int i = 0; i < X.length; i++ )
@@ -334,9 +333,6 @@ public class ProfileView extends AbstractTrackMateModelView
 		// Create chart
 		final JFreeChart chart = new JFreeChart( title, JFreeChart.DEFAULT_TITLE_FONT, plot, false );
 
-		// Theme
-		ChartFactory.getChartTheme().apply( chart );
-
 		return chart;
 	}
 
@@ -449,7 +445,7 @@ public class ProfileView extends AbstractTrackMateModelView
 		//
 		// final Model model = new Model();
 
-		final File file = new File( "samples/SUM_FakeTracks.xml" );
+		final File file = new File( "samples/Data/101.0-2015-02-13 163957_ColumnSum.xml" );
 		final TmXmlReader reader = new TmXmlReader( file );
 		if ( !reader.isReadingOk() )
 		{

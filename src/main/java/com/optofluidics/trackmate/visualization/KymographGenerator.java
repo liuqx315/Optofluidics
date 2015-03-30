@@ -22,7 +22,7 @@ public class KymographGenerator
 			final Object sourcePixels = imp.getStack().getPixels( i + 1 );
 			System.arraycopy( sourcePixels, 0, targetPixels, i * width, width );
 		}
-		return new ImagePlus( imp.getShortTitle() + "Kymograph", targetProcessor );
+		return new ImagePlus( imp.getTitle() + "_Kymograph", targetProcessor );
 	}
 
 	public static final ImagePlus fromLineImageHorizontal( final ImagePlus imp )
@@ -41,6 +41,6 @@ public class KymographGenerator
 				targetProcessor.set( i, x, val );
 			}
 		}
-		return new ImagePlus( imp.getShortTitle() + "Kymograph", targetProcessor );
+		return new ImagePlus( imp.getTitle() + "_Kymograph", targetProcessor );
 	}
 }
