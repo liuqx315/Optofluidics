@@ -30,6 +30,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -79,8 +80,9 @@ public class OptofluidicsBatchProcessor_ implements PlugIn
 		logger = new LogRecorder( Logger.IJ_LOGGER );
 		logger.log( "Received the following arg string: " + arg + "\n" );
 
-		String folder = null;
+		String inputFolder = null;
 		String parameterSetName = null;
+		String output = null;
 
 		if ( null == arg || arg.isEmpty() )
 		{
@@ -98,8 +100,9 @@ public class OptofluidicsBatchProcessor_ implements PlugIn
 			try
 			{
 				final Map< String, String > macroOptions = SplitString.splitMacroOptions( arg );
-				folder = macroOptions.get( "folder" );
+				inputFolder = macroOptions.get( "folder" );
 				parameterSetName = macroOptions.get( "parameters" );
+				output = macroOptions.get( "output" );
 			}
 			catch ( final ParseException e )
 			{
@@ -108,17 +111,18 @@ public class OptofluidicsBatchProcessor_ implements PlugIn
 			}
 		}
 		logger.log( "Processor parameters:\n" );
-		logger.log( "Data folder = " + folder + "\n" );
+		logger.log( "Data folder = " + inputFolder + "\n" );
+		logger.log( "Output folder = " + output + '\n' );
 		logger.log( "Parameter set name = " + parameterSetName + "\n" );
 
 
-		if ( null == folder || folder.isEmpty() )
+		if ( null == inputFolder || inputFolder.isEmpty() )
 		{
 			// Use dialog.
 			OptofluidicsUtil.setSystemLookAndFeel();
-			if ( null != folder )
+			if ( null != inputFolder )
 			{
-				path = folder;
+				path = inputFolder;
 			}
 			if ( null == path || path.length() == 0 )
 			{
@@ -134,16 +138,29 @@ public class OptofluidicsBatchProcessor_ implements PlugIn
 			dialogPath.addMessage( "Browse to the folder containing the data." );
 			dialogPath.addDirectoryField( "Folder", path );
 
+			dialogPath.addMessage( "Output folder." );
+			dialogPath.addDirectoryField( "Output", path );
+
 			dialogPath.addHelp( HELP_TEXT );
 			dialogPath.showDialog();
 
 			if ( !dialogPath.wasOKed() ) { return; }
 			path = dialogPath.getNextString();
+			output = dialogPath.getNextString();
 		}
 		else
 		{
 			// Run with plugin argument as input.
-			path = folder;
+			path = inputFolder;
+		}
+
+		/*
+		 * Output folder
+		 */
+
+		if ( null == output || output.isEmpty() )
+		{
+			output = inputFolder;
 		}
 
 		/*
@@ -159,11 +176,12 @@ public class OptofluidicsBatchProcessor_ implements PlugIn
 			if ( !parameterSetDialog.wasOKed() ) { return; }
 		}
 
-		final File file = new File( path );
-		exec( file, parameterSetName );
+		final File dataFolder = new File( path );
+		final File outputFolder = new File( output );
+		exec( dataFolder, outputFolder, parameterSetName );
 	}
 
-	public void exec( final File folder, final String parameterSetName )
+	public void exec( final File dataFolder, final File outputFolder, final String parameterSetName )
 	{
 		logger.log( "Optofluidics batch processor " + Main.OPTOFLUIDICS_LIB_VERSION + " started on " + new Date() + ".\n" );
 
@@ -179,19 +197,35 @@ public class OptofluidicsBatchProcessor_ implements PlugIn
 		 * Test folder.
 		 */
 
-		if ( !folder.exists() )
+		if ( !dataFolder.exists() )
 		{
-			logger.error( "Master folder " + folder + " does not exist. Aborting.\n" );
+			logger.error( "Master folder " + dataFolder + " does not exist. Aborting.\n" );
 			return;
 		}
-		if ( !folder.canRead() )
+		if ( !dataFolder.canRead() )
 		{
-			logger.error( "Could not read the content of folder " + folder + ". Aborting.\n" );
+			logger.error( "Could not read the content of folder " + dataFolder + ". Aborting.\n" );
 			return;
 		}
-		if ( !folder.isDirectory() )
+		if ( !dataFolder.isDirectory() )
 		{
-			logger.error( "File " + folder + " is not a folder. Aborting.\n" );
+			logger.error( "File " + dataFolder + " is not a folder. Aborting.\n" );
+			return;
+		}
+
+		if ( !outputFolder.exists() )
+		{
+			logger.error( "Output folder " + outputFolder + " does not exist. Aborting.\n" );
+			return;
+		}
+		if ( !outputFolder.isDirectory() )
+		{
+			logger.error( "Output file " + outputFolder + " is not a folder. Aborting.\n" );
+			return;
+		}
+		if ( !outputFolder.canWrite() )
+		{
+			logger.error( "Output folder " + outputFolder + " cannot be written into. Aborting.\n" );
 			return;
 		}
 
@@ -199,7 +233,7 @@ public class OptofluidicsBatchProcessor_ implements PlugIn
 		 * Get master folder content.
 		 */
 
-		logger.log( "Inspecting master folder " + folder + ".\n" );
+		logger.log( "Inspecting master folder " + dataFolder + ".\n" );
 
 		final FilenameFilter fileFilter = new FilenameFilter()
 		{
@@ -226,7 +260,7 @@ public class OptofluidicsBatchProcessor_ implements PlugIn
 			}
 		};
 
-		final File[] content = folder.listFiles( fileFilter );
+		final File[] content = dataFolder.listFiles( fileFilter );
 		final List< File > tifFiles = new ArrayList< File >();
 		final List< File > folders = new ArrayList< File >();
 		for ( final File file : content )
@@ -273,7 +307,7 @@ public class OptofluidicsBatchProcessor_ implements PlugIn
 		 */
 
 		final Logger ilogger = new IndentLogger( logger, 4 );
-		final TiffFolderOpenerConverter opener = new TiffFolderOpenerConverter( ilogger );
+		final TiffFolderOpenerConverter opener = new TiffFolderOpenerConverter( outputFolder, ilogger );
 		final List< File > toProcess = new ArrayList< File >( folders );
 		toProcess.addAll( tifFiles );
 
@@ -316,7 +350,7 @@ public class OptofluidicsBatchProcessor_ implements PlugIn
 					spotsStatsTable.showRowNumbers( false );
 
 					final String spotStatsFilename = title.substring( 0, title.length() - 4 ) + "_SpotsStats.csv";
-					final String spotStatsFilePath =  new File( folder, spotStatsFilename ).getAbsolutePath();
+					final String spotStatsFilePath = new File( outputFolder, spotStatsFilename ).getAbsolutePath();
 					try
 					{
 						spotsStatsTable.saveAs( spotStatsFilePath );
@@ -353,7 +387,7 @@ public class OptofluidicsBatchProcessor_ implements PlugIn
 
 					final String velocityAnalysisFilename = title.substring( 0, title.length() - 4 ) + "_VelocityStats.csv";
 					final VelocityAnalysisExporter exporter = new VelocityAnalysisExporter( model, selectionModel );
-					final String velocityAnalysisFilePath = new File( folder, velocityAnalysisFilename ).getAbsolutePath();
+					final String velocityAnalysisFilePath = new File( outputFolder, velocityAnalysisFilename ).getAbsolutePath();
 					try
 					{
 						final ResultsTable velocityAnalysisTable = exporter.getTable();
@@ -371,7 +405,7 @@ public class OptofluidicsBatchProcessor_ implements PlugIn
 					 */
 
 					final String xmlFilename = title.substring( 0, title.length() - 4 ) + ".xml";
-					final File targetFile = new File( folder, xmlFilename );
+					final File targetFile = new File( outputFolder, xmlFilename );
 
 					final TmXmlWriter writer = new TmXmlWriter( targetFile, recorder ) {
 						@Override
@@ -418,7 +452,10 @@ public class OptofluidicsBatchProcessor_ implements PlugIn
 
 		logger.log( "\nAll files processed -  " + new Date() + ".\n" );
 
-		final File logFile = new File( folder, "log.txt" );
+		final Calendar cal = Calendar.getInstance();
+		cal.setTime( new Date() );
+		final String logName = String.format( "log-%1$tY-%1$tm-%1$td-%1$tk-%1$tS-%1$tp.txt", cal );
+		final File logFile = new File( outputFolder, logName );
 		try
 		{
 			writeLog( logger.toString(), logFile );

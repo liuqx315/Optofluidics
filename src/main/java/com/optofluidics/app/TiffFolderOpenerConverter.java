@@ -15,8 +15,11 @@ public class TiffFolderOpenerConverter
 
 	private final Logger logger;
 
-	public TiffFolderOpenerConverter( final Logger logger )
+	private final File outputFolder;
+
+	public TiffFolderOpenerConverter( final File outputFolder, final Logger logger )
 	{
+		this.outputFolder = outputFolder;
 		this.logger = logger;
 	}
 
@@ -25,12 +28,22 @@ public class TiffFolderOpenerConverter
 		if ( file.isDirectory() )
 		{
 			logger.log( "Source " + file + " is a folder.\n" );
-			final File parent = file.getParentFile();
+
+			final File parent;
+			if ( null == outputFolder )
+			{
+				parent = file.getParentFile();
+			}
+			else
+			{
+				parent = outputFolder;
+			}
+
 			final File target = new File( parent, makeTargetName( file ) );
 			final boolean exist = target.exists();
 			if ( exist )
 			{
-				logger.log( "Matching tif file found in parent folder.\n" );
+				logger.log( "Matching tif file found in output folder.\n" );
 				if ( convertAndSave )
 				{
 					logger.log( "Loading from folder and overwriting existing tif file.\n" );
